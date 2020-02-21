@@ -1,0 +1,10 @@
+# m    h  dom mon dow   command
+24,53 07-20 * * * /usr/bin/python2.7 /srv/airtime/watch_folder/panui_import.py
+23,54 07-20 * * * /usr/bin/python2.7 /srv/airtime/watch_folder/ngatohu_import.py
+1,15,25 07-20 * * * /usr/bin/python2.7 /srv/airtime/watch_folder/ngatake_import.py > /home/ubuntu/cron.log
+31,45,50,55,56,57,58,59 06-17 * * * /usr/bin/python2.7 /srv/airtime/watch_folder/waatea_import.py > /home/ubuntu/cron.log
+15 5,17 * * * /home/ubuntu/sync_db_to_bucket.sh
+1 0 * * MON-SAT /home/ubuntu/sync_files_no_md5.sh
+1 0 * * SUN /home/ubuntu/sync_files_md5.sh
+42 09-20 * * * /usr/bin/python2.7 /srv/airtime/watch_folder/haukainga_import.py > /home/ubuntu/cron.log
+*/10 * * * * /usr/bin/python2.7 /srv/airtime/watch_folder/interview_import.py
