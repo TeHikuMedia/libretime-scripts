@@ -10,6 +10,9 @@ from grp import getgrnam
 from shutil import copyfile
 from import_functions import time_string, convert_media, scale_media
 
+import os
+
+
 start_time = datetime.now()
 
 ftp = FTP('ftp.irirangi.net') 
@@ -32,8 +35,14 @@ if f_id == '':
     raise NameError('news sport %s%s'%(hour,ampm))
 
 f_name = 'Waatea_News_%s%s.mp3'%(hour,ampm)
-f_path = '/home/user/libretime_media/waatea_news'
-tmp_path = '/home/user/libretime_media/tmp'
+f_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
+if not os.path.exists(f_path):
+    os.mkdir(f_path)
+
+tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
+if not os.path.exists(tmp_path):
+    os.mkdir(tmp_path)
+
 target_length = 60*6.0
 print "Fetching %s"%(f_name)
 
@@ -55,8 +64,8 @@ get_new_file = False
 # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
 if path.isfile('%s/%s'%(f_path, f_name)):
     # Copy file then probe as FTAG seems to cause a file change event that airtime media monitor reads
-    copyfile('%s/%s'%(f_path, f_name), '%s/%s'%(tmp_path, 'tmp.mp3'))
-    fd = taglib.File('%s/%s'%(tmp_path, 'tmp.mp3'))
+    copyfile(path.join(f_path, f_name), path.join(tmp_path, 'tmp.mp3'))
+    fd = taglib.File(path.join(tmp_path, 'tmp.mp3'))
     try:
         file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
     except ValueError:
@@ -101,23 +110,23 @@ if get_new_file:
 
     commands.getstatusoutput('sudo chown www-data %s'%(f_name))
     commands.getstatusoutput('sudo chgrp www-data %s'%(f_name))
-    commands.getstatusoutput('mv %s %s/'%(f_name,f_path))
+    os.rename(f_name, os.path.join(f_path, f_name))
 
     td =  (datetime.now() - start_time)
     print 'elapsed time = %s' % ( td.seconds )
 
     # Try to force move file into airtime shit
-    try:
-        dest_file = commands.getstatusoutput('sudo cat /var/log/airtime/pypo/pypo.log | grep copy.*%s.*/scheduler/'%(f_name))[1].split('\n')[0].split('/scheduler/')[1].split('.mp3')[0]+'.mp3'
-        print "Copying %s to .../scheduler/%s" %(f_name, dest_file)
+    # try:
+    #     dest_file = commands.getstatusoutput('sudo cat /var/log/airtime/pypo/pypo.log | grep copy.*%s.*/scheduler/'%(f_name))[1].split('\n')[0].split('/scheduler/')[1].split('.mp3')[0]+'.mp3'
+    #     print "Copying %s to .../scheduler/%s" %(f_name, dest_file)
 
-        success = commands.getstatusoutput('sudo cp -v %s/%s /var/tmp/airtime/pypo/cache/scheduler/%s'%(f_path,f_name,dest_file))
-        commands.getstatusoutput('sudo chown www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        commands.getstatusoutput('sudo chgrp www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        commands.getstatusoutput('sudo chmod a+rw /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        for i in success: print i
-    except:
-        print "Something went wrong while trying to fudge Airtime"
+    #     success = commands.getstatusoutput('sudo cp -v %s/%s /var/tmp/airtime/pypo/cache/scheduler/%s'%(f_path,f_name,dest_file))
+    #     commands.getstatusoutput('sudo chown www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     commands.getstatusoutput('sudo chgrp www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     commands.getstatusoutput('sudo chmod a+rw /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     for i in success: print i
+    # except:
+    #     print "Something went wrong while trying to fudge Airtime"
 
 else:
     commands.getstatusoutput('rm %s'%(f_name) )
