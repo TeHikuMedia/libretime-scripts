@@ -32,8 +32,8 @@ if f_id == '':
     raise NameError('news sport %s%s'%(hour,ampm))
 
 f_name = 'Waatea_News_%s%s.mp3'%(hour,ampm)
-f_path = '/srv/airtime/watch_folder/waatea_news'
-tmp_path = '/srv/airtime/watch_folder/'
+f_path = '/home/user/libretime_media/waatea_news'
+tmp_path = '/home/user/libretime_media/tmp'
 target_length = 60*6.0
 print "Fetching %s"%(f_name)
 
