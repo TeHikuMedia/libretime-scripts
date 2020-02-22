@@ -9,6 +9,7 @@ from pwd import getpwnam
 from grp import getgrnam
 from shutil import copyfile
 from import_functions import time_string, convert_media, scale_media
+from settings import BASE_MEDIA_DIR
 
 import os
 
