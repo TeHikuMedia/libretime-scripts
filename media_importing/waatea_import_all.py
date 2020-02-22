@@ -12,7 +12,7 @@ from settings import BASE_MEDIA_DIR
 
 file_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
 
-if not os.exists(file_path):
+if not os.path.exists(file_path):
     os.mkdir(file_path)
 
 start_time = datetime.now()
