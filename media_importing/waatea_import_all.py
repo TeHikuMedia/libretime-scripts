@@ -93,7 +93,7 @@ for hour_increment in range(7,19):
     fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
     fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0] + r_date + " - Updated %s" % ( datetime.now().strftime('%H:%M-%d-%m-%Y') )
     fd.tags[u'ARTIST'] = u"Waatea"
-    fd.tags[u'organization'] = u"*** NEWS ***"
+    fd.tags[u'ORGANIZATION'] = u"*** NEWS ***"
     fd.tags[u'label'] =  u"*** NEWS ***"
     fd.tags[u'PUBLISHER'] =  u"*** NEWS ***"
     fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())

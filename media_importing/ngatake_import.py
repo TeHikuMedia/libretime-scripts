@@ -6,10 +6,13 @@ import time
 import commands 
 from math import floor
 from os import fchown, path
+import os
 from pwd import getpwnam  
 from grp import getgrnam
 import json
 from import_functions import time_string, convert_media, scale_media
+
+from settings import BASE_MEDIA_DIR
 
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
@@ -40,11 +43,9 @@ PM = dt.strftime('%p')
 print title
 
 f_name = 'Nga_Take_{0}.mp3'.format(PM)
-f_path = '/srv/airtime/watch_folder/tehiku_ngatake'
-# f = open(f_name, 'w')
-# f.write(data)
-# f.close()
-# title = "NA"
+f_path = path.join(BASE_MEDIA_DIR, 'tehiku_ngatake')
+if not os.path.exists(f_path):
+    os.mkdir(f_path)
 
 from subprocess import Popen
 
@@ -65,7 +66,9 @@ if get_new_file:
     fd.tags['YEAR'] = datetime.now().strftime('%Y')
     fd.tags['TITLE'] =  u"Nga Take %s %s - Updated %s" % (PM, title, datetime.now().strftime('%H:%M-%d-%m-%Y') )
     fd.tags['ARTIST'] = u"Te Hiku Media"
-    fd.tags['LABEL'] = u"News-Auto-Imported, Last-Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags['LABEL'] = u"*** NEWS *** Last-Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags['ORGANIZATION'] = u"*** NEWS *** Last-Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+
     fd.tags['UFID'] = u"1840-TEHIKUMEDIA-NGATAKE-MP3"
     fd.tags['OWNER'] = u"admin"
     fd.tags['GENRE'] = u"News & Current Affairs"
@@ -82,17 +85,17 @@ if get_new_file:
     print 'elapsed time = %s' % ( td.seconds )
 
     # Try to force move file into airtime shit
-    try:
-        dest_file = commands.getstatusoutput('sudo cat /var/log/airtime/pypo/pypo.log | grep copy.*%s.*/scheduler/'%(f_name))[1].split('\n')[0].split('/scheduler/')[1].split('.mp3')[0]+'.mp3'
-        print "Copying %s to .../scheduler/%s" %(f_name, dest_file)
+    # try:
+    #     dest_file = commands.getstatusoutput('sudo cat /var/log/airtime/pypo/pypo.log | grep copy.*%s.*/scheduler/'%(f_name))[1].split('\n')[0].split('/scheduler/')[1].split('.mp3')[0]+'.mp3'
+    #     print "Copying %s to .../scheduler/%s" %(f_name, dest_file)
 
-        success = commands.getstatusoutput('sudo cp -v %s/%s /var/tmp/airtime/pypo/cache/scheduler/%s'%(f_path,f_name,dest_file))
-        commands.getstatusoutput('sudo chown www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        commands.getstatusoutput('sudo chgrp www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        commands.getstatusoutput('sudo chmod a+rw /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
-        for i in success: print i
-    except:
-        print "Something went wrong while trying to fudge Airtime"
+    #     success = commands.getstatusoutput('sudo cp -v %s/%s /var/tmp/airtime/pypo/cache/scheduler/%s'%(f_path,f_name,dest_file))
+    #     commands.getstatusoutput('sudo chown www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     commands.getstatusoutput('sudo chgrp www-data /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     commands.getstatusoutput('sudo chmod a+rw /var/tmp/airtime/pypo/cache/scheduler/%s'%(dest_file))
+    #     for i in success: print i
+    # except:
+    #     print "Something went wrong while trying to fudge Airtime"
 
 else:
     commands.getstatusoutput('rm %s'%(f_name) )
