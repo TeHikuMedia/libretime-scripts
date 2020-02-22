@@ -7,7 +7,7 @@ from ftplib import FTP
 from os import fchown
 from pwd import getpwnam  
 from grp import getgrnam
-
+import os
 from settings import BASE_MEDIA_DIR
 
 start_time = datetime.now()
