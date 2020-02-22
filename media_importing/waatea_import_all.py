@@ -8,6 +8,8 @@ from os import fchown
 from pwd import getpwnam  
 from grp import getgrnam
 
+from settings import BASE_MEDIA_DIR
+
 start_time = datetime.now()
 
 ftp = FTP('ftp.irirangi.net') 
@@ -92,10 +94,12 @@ for hour_increment in range(7,19):
     retval = fd.save()
     print retval
     print fd.tags
-    commands.getstatusoutput('mv %s /srv/airtime/watch_folder/waatea_news/'%(f_name))
 
-    commands.getstatusoutput('sudo chown www-data /srv/airtime/watch_folder/waatea_news/%s'%(f_name))
-    commands.getstatusoutput('sudo chgrp www-data /srv/airtime/watch_folder/waatea_news/%s'%(f_name))
+    file_path = os.path.join([BASE_MEDIA_DIR, 'waatea_news'])
+
+    commands.getstatusoutput('mv {0} {1}'.format(f_name, file_path))
+    commands.getstatusoutput('sudo chown www-data {0} {1}'.format(f_name, file_path))
+    commands.getstatusoutput('sudo chgrp www-data {0} {1}'.format(f_name, file_path))
 
     td =  (datetime.now() - start_time)
     print 'elapsed time = %s' % ( td.seconds )
