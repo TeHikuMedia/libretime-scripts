@@ -96,10 +96,11 @@ for hour_increment in range(7,19):
     print fd.tags
 
     file_path = os.path.join([BASE_MEDIA_DIR, 'waatea_news'])
-
-    commands.getstatusoutput('mv {0} {1}'.format(f_name, file_path))
-    commands.getstatusoutput('sudo chown www-data {0} {1}'.format(f_name, file_path))
-    commands.getstatusoutput('sudo chgrp www-data {0} {1}'.format(f_name, file_path))
+    print('mv {0} {1}/'.format(f_name, file_path))
+    print('sudo chown www-data {0}/{1}'.format(file_path, f_name))
+    commands.getstatusoutput('mv {0} {1}/'.format(f_name, file_path))
+    commands.getstatusoutput('sudo chown www-data {0}/{1}'.format(file_path, f_name))
+    commands.getstatusoutput('sudo chgrp www-data {0}/{1}'.format(file_path, f_name))
 
     td =  (datetime.now() - start_time)
     print 'elapsed time = %s' % ( td.seconds )
