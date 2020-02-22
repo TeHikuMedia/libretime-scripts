@@ -64,10 +64,10 @@ if get_new_file:
     fd = taglib.File(f_name)
     fd.tags['DATE'] = datetime.now().strftime('%Y-%m-%d')
     fd.tags['YEAR'] = datetime.now().strftime('%Y')
-    fd.tags['TITLE'] =  u"Nga Take %s %s - Updated %s" % (PM, title, datetime.now().strftime('%H:%M-%d-%m-%Y') )
+    fd.tags['TITLE'] =  u"Nga Take %s - %s" % (PM, title)
     fd.tags['ARTIST'] = u"Te Hiku Media"
-    fd.tags['LABEL'] = u"*** NEWS *** Last-Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
-    fd.tags['ORGANIZATION'] = u"*** NEWS *** Last-Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags['LABEL'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags['ORGANIZATION'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
 
     fd.tags['UFID'] = u"1840-TEHIKUMEDIA-NGATAKE-MP3"
     fd.tags['OWNER'] = u"admin"
