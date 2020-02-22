@@ -1,4 +1,6 @@
 import taglib
+import mutagen
+
 import urllib2
 from datetime import datetime, timedelta
 import commands 
@@ -98,8 +100,25 @@ for hour_increment in range(7,19):
     fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(min, sec, hund)
     fd.tags[u'TLEN'] = u"%d:%02d.%d"%(min, sec, hund)
     retval = fd.save()
-    print retval
-    print fd.tags
+    print(retval)
+    print(fd.tags)
+
+
+    from mutagen.easyid3 import EasyID3
+    audio = EasyID3(f_name)
+    # audio['label'] = u"{0}".format(collection.replace('-', ' ').title())
+    audio['organization'] = u"*** NEWS ***"
+    # audio['title'] = u"*** NEWS ***"
+    # audio['label'] = u'test'
+    audio.save()
+
+    audio_file = mutagen.File(f_name, easy=True)
+    try:
+        print(audio_file['organization'])
+    except:
+        pass
+    print(audio_file.keys())
+    print(audio_file['title'])
 
 
     f_name_abs = os.path.join(file_path, f_name)
