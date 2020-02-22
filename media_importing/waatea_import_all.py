@@ -95,6 +95,7 @@ for hour_increment in range(7,19):
     fd.tags[u'ARTIST'] = u"Waatea"
     fd.tags[u'LABEL'] = u"*** NEWS ***"
     fd.tags[u'ORGANIZATION'] =  u"*** NEWS ***"
+    fd.tags[u'PUBLISHER'] =  u"*** NEWS ***"
     fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
     fd.tags[u'OWNER'] = u"admin"
     fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(min, sec, hund)
@@ -103,23 +104,11 @@ for hour_increment in range(7,19):
     print(retval)
     print(fd.tags)
 
-
-    from mutagen.easyid3 import EasyID3
-    audio = EasyID3(f_name)
-    # audio['label'] = u"{0}".format(collection.replace('-', ' ').title())
-    audio['organization'] = u"*** NEWS ***"
-    # audio['title'] = u"*** NEWS ***"
-    # audio['label'] = u'test'
+    from mutagen.id3 import ID3, TPUB
+    audio = ID3(f_name)
+    audio.add(TPUB(encoding=3, text=u"*** NEWS ***"))
     audio.save()
-
-    audio_file = mutagen.File(f_name, easy=True)
-    try:
-        print(audio_file['organization'])
-    except:
-        pass
-    print(audio_file.keys())
-    print(audio_file['title'])
-
+    
 
     f_name_abs = os.path.join(file_path, f_name)
     os.rename(f_name, f_name_abs)
