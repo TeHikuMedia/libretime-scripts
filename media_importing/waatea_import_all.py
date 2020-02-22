@@ -10,6 +10,11 @@ from grp import getgrnam
 import os
 from settings import BASE_MEDIA_DIR
 
+file_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
+
+if not os.exists(file_path):
+    os.mkdir(file_path)
+
 start_time = datetime.now()
 
 ftp = FTP('ftp.irirangi.net') 
@@ -95,12 +100,15 @@ for hour_increment in range(7,19):
     print retval
     print fd.tags
 
-    file_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
+    
     print('mv {0} {1}/'.format(f_name, file_path))
     print('sudo chown www-data {0}/{1}'.format(file_path, f_name))
-    commands.getstatusoutput('mv {0} {1}/'.format(f_name, file_path))
-    commands.getstatusoutput('sudo chown www-data {0}/{1}'.format(file_path, f_name))
-    commands.getstatusoutput('sudo chgrp www-data {0}/{1}'.format(file_path, f_name))
+    
+    f_name_abs = os.join(file_path, f_name)
+    os.rename(f_name, f_name_abs)
+
+    commands.getstatusoutput('sudo chown www-data {0}'.format(f_name_abs))
+    commands.getstatusoutput('sudo chgrp www-data {0}'.format(f_name_abs))
 
     td =  (datetime.now() - start_time)
     print 'elapsed time = %s' % ( td.seconds )
