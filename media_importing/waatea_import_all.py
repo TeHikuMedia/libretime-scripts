@@ -104,7 +104,7 @@ for hour_increment in range(7,19):
     print('mv {0} {1}/'.format(f_name, file_path))
     print('sudo chown www-data {0}/{1}'.format(file_path, f_name))
     
-    f_name_abs = os.join(file_path, f_name)
+    f_name_abs = os.path.join(file_path, f_name)
     os.rename(f_name, f_name_abs)
 
     commands.getstatusoutput('sudo chown www-data {0}'.format(f_name_abs))
