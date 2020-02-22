@@ -1,0 +1,101 @@
+import taglib
+import urllib2
+from datetime import datetime, timedelta
+import commands 
+from math import floor
+from ftplib import FTP
+from os import fchown
+from pwd import getpwnam  
+from grp import getgrnam
+
+start_time = datetime.now()
+
+ftp = FTP('ftp.irirangi.net') 
+ftp.login('NGWAN_Upload','ngwanupload')
+ftp.cwd('MP3_News')
+items=[]
+ftp.retrlines('RETR file_ids.txt', lambda x: items.append(x) ).split('\n')
+
+for hour_increment in range(7,19):
+
+    time = datetime.strptime('2015-12-09 %02d:00'%(hour_increment),'%Y-%m-%d %H:%M')
+
+    hour = int( time.strftime('%I') ) # always want to get an hour ahead!
+    ampm = time.strftime('%p').split('M')[0].lower()
+
+    print hour,ampm
+
+    f_id = ''
+    for item in items:
+        if 'news sport %s%s'%(hour,ampm) in item:
+            f_id = item.split(' ')[0].strip()
+    if f_id == '':
+        print "No News for this Hour"
+        continue
+        #raise NameError('news sport %s%s'%(hour,ampm))
+
+    f_name = 'Waatea_News_%s%s.mp3'%(hour,ampm)
+    target_length = 60*6.0
+
+    ftp.retrbinary('RETR %s.MP3'%(f_id), open(f_name, 'wb').write)
+    xml=[]
+    ftp.retrlines( 'RETR %s.xml'%(f_id), lambda x: xml.append(x) )
+    r_date = ''
+    for line in xml:
+        if '<recorded>' in line:
+            r_date = line.replace('<recorded>','').replace('</recorded>','')
+
+    # convert to ogg
+    #data = commands.getstatusoutput( 'ffmpeg -y -i "%s" -c:a libvorbis -q:a 5 "%s"' % ( f_name, f_name.replace('.mp3','.ogg') ) )
+    #commands.getstatusoutput('rm %s'%(f_name))
+    #f_name = f_name.replace('.mp3','.ogg')
+
+
+    length = commands.getstatusoutput('ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name))[1]
+    print length
+    sec = int(length.split('.')[0])
+    hund = int(round(float(length.split('.')[1][0:2])/10))
+    min = int(floor(int(sec)/60.))
+    sec = int(sec - 60*min)
+    length = float(length)
+
+    # dont scale if within 1 second
+    if abs(target_length - length)<1:
+        print "Not Scaling"
+        scale = 1
+    else:
+        scale = length/target_length
+        if scale>1.05: scale = 1.05
+        elif scale < .95: scale = .95
+        print "Length = %d:%02d.%d"%(min, sec, hund)
+        print "Scaling by %0.04f"%(scale)
+        cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(f_name,scale,'_'+f_name)
+        commands.getstatusoutput(cmd)
+        commands.getstatusoutput('mv %s %s'%('_'+f_name , f_name))
+
+    length = str(scale*length)
+    sec = int(length.split('.')[0])
+    hund = int(round(float(length.split('.')[1][0:2])/10))
+    min = int(floor(int(sec)/60.))
+    sec = int(sec - 60*min)
+
+    fd = taglib.File(f_name)
+    fd.tags[u'DATE'] = datetime.now().strftime('%Y-%m-%d')
+    fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
+    fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0] + r_date + " - Updated %s" % ( datetime.now().strftime('%H:%M-%d-%m-%Y') )
+    fd.tags[u'ARTIST'] = u"Waatea"
+    fd.tags[u'LABEL'] = u"News-Auto-Imported, Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
+    fd.tags[u'OWNER'] = u"admin"
+    fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(min, sec, hund)
+    fd.tags[u'TLEN'] = u"%d:%02d.%d"%(min, sec, hund)
+    retval = fd.save()
+    print retval
+    print fd.tags
+    commands.getstatusoutput('mv %s /srv/airtime/watch_folder/waatea_news/'%(f_name))
+
+    commands.getstatusoutput('sudo chown www-data /srv/airtime/watch_folder/waatea_news/%s'%(f_name))
+    commands.getstatusoutput('sudo chgrp www-data /srv/airtime/watch_folder/waatea_news/%s'%(f_name))
+
+    td =  (datetime.now() - start_time)
+    print 'elapsed time = %s' % ( td.seconds )
