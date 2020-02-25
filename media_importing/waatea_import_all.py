@@ -91,7 +91,7 @@ for hour_increment in range(7,19):
     fd = taglib.File(f_name)
     fd.tags[u'DATE'] = datetime.now().strftime('%Y-%m-%d')
     fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
-    fd.tags[u'TITLE'] = "TEST %02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
+    fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
     fd.tags[u'ARTIST'] = u"Waatea"
     fd.tags[u'ORGANIZATION'] = u"*** NEWS ***"
     fd.tags[u'label'] =  u"*** NEWS ***"
