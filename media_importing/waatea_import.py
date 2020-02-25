@@ -98,7 +98,7 @@ if get_new_file:
     a = fd.tags[u'TITLE'][0].split(' - ')[0].strip()
     fd.tags[u'DATE'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
     fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
-    fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
+    fd.tags[u'TITLE'] = "TEST %02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
     fd.tags[u'ARTIST'] = u"Waatea"
     fd.tags[u'LABEL'] = u"News-Auto-Imported, Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
     fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
