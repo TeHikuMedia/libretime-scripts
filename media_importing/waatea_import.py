@@ -104,7 +104,7 @@ if get_new_file:
     fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
     fd.tags[u'OWNER'] = u"admin"
     fd.tags[u'ORGANIZATION'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
-    fd.tags[u'label'] =  u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+    fd.tags[u'LABEL'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
     fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
     fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
     retval = fd.save()
