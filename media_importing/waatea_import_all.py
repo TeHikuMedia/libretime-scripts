@@ -15,7 +15,7 @@ file_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
 
 if not os.path.exists(BASE_MEDIA_DIR):
     os.mkdir(BASE_MEDIA_DIR)
-    
+
 if not os.path.exists(file_path):
     os.mkdir(file_path)
 
@@ -64,6 +64,7 @@ for hour_increment in range(7,19):
     cmd = 'ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name)
     p = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
+    print(out)
     length = out[1]
     print(length)
     sec = int(length.split('.')[0])
