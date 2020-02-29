@@ -2,6 +2,7 @@ import taglib
 import mutagen
 
 from datetime import datetime, timedelta
+import json
 import subprocess 
 from math import floor
 from ftplib import FTP
@@ -61,11 +62,12 @@ for hour_increment in range(7,19):
     #commands.getstatusoutput('rm %s'%(f_name))
     #f_name = f_name.replace('.mp3','.ogg')
 
-    cmd = 'ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name)
+    cmd = 'ffprobe -i %s -show_entries format=duration -v quiet -of json'%(f_name)
     p = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
     print(out)
-    length = out[1]
+    data = json.loads(out)
+    length = data['format']['duration']
     print(length)
     sec = int(length.split('.')[0])
     hund = int(round(float(length.split('.')[1][0:2])/10))
