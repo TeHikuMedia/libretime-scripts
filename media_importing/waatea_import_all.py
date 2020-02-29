@@ -2,7 +2,7 @@ import taglib
 import mutagen
 
 from datetime import datetime, timedelta
-import commands 
+import subprocess 
 from math import floor
 from ftplib import FTP
 from os import fchown
@@ -58,8 +58,10 @@ for hour_increment in range(7,19):
     #commands.getstatusoutput('rm %s'%(f_name))
     #f_name = f_name.replace('.mp3','.ogg')
 
-
-    length = commands.getstatusoutput('ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name))[1]
+    cmd = 'ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name)
+    p = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = p.communicate()
+    length = out[1]
     print(length)
     sec = int(length.split('.')[0])
     hund = int(round(float(length.split('.')[1][0:2])/10))
@@ -78,8 +80,10 @@ for hour_increment in range(7,19):
         print("Length = %d:%02d.%d"%(min, sec, hund))
         print("Scaling by %0.04f"%(scale))
         cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(f_name,scale,'_'+f_name)
-        commands.getstatusoutput(cmd)
-        commands.getstatusoutput('mv %s %s'%('_'+f_name , f_name))
+        p = subprocess.Popen(cmd.split(' '))
+        p.communicate()
+        p = subprocess.Popen(['mv', '_'+f_name, f_name])
+        p.communicate()
 
     length = str(scale*length)
     sec = int(length.split('.')[0])
@@ -112,8 +116,13 @@ for hour_increment in range(7,19):
     f_name_abs = os.path.join(file_path, f_name)
     os.rename(f_name, f_name_abs)
 
-    commands.getstatusoutput('sudo chown www-data {0}'.format(f_name_abs))
-    commands.getstatusoutput('sudo chgrp www-data {0}'.format(f_name_abs))
+    cmd = 'sudo chown www-data {0}'.format(f_name_abs)
+    p = subprocess.Popen(cmd.split(' '))
+    p.communicate()
+
+    cmd = 'sudo chgrp www-data {0}'.format(f_name_abs)
+    p = subprocess.Popen(cmd.split(' '))
+    p.communicate()
 
     td =  (datetime.now() - start_time)
     print('elapsed time = %s' % ( td.seconds ))
