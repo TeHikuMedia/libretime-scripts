@@ -86,7 +86,7 @@ for hour_increment in range(7,19):
         print("Length = %d:%02d.%d"%(min, sec, hund))
         print("Scaling by %0.04f"%(scale))
         cmd = ['ffmpeg', '-i', f_name, 
-            '-filter:a', "atempo={0.04f}".format(scale),
+            '-filter:a', "atempo=%0.04f"%(scale),
             '-vn', '_'+f_name]
         p = subprocess.Popen(cmd.split(' '))
         p.communicate()
