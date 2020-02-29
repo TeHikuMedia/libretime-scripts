@@ -32,14 +32,14 @@ for hour_increment in range(7,19):
     hour = int( time.strftime('%I') ) # always want to get an hour ahead!
     ampm = time.strftime('%p').split('M')[0].lower()
 
-    print hour,ampm
+    print(hour,ampm)
 
     f_id = ''
     for item in items:
         if 'news sport %s%s'%(hour,ampm) in item:
             f_id = item.split(' ')[0].strip()
     if f_id == '':
-        print "No News for this Hour"
+        print("No News for this Hour")
         continue
         #raise NameError('news sport %s%s'%(hour,ampm))
 
@@ -61,7 +61,7 @@ for hour_increment in range(7,19):
 
 
     length = commands.getstatusoutput('ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(f_name))[1]
-    print length
+    print(length)
     sec = int(length.split('.')[0])
     hund = int(round(float(length.split('.')[1][0:2])/10))
     min = int(floor(int(sec)/60.))
@@ -70,14 +70,14 @@ for hour_increment in range(7,19):
 
     # dont scale if within 1 second
     if abs(target_length - length)<1:
-        print "Not Scaling"
+        print("Not Scaling")
         scale = 1
     else:
         scale = length/target_length
         if scale>1.05: scale = 1.05
         elif scale < .95: scale = .95
-        print "Length = %d:%02d.%d"%(min, sec, hund)
-        print "Scaling by %0.04f"%(scale)
+        print("Length = %d:%02d.%d"%(min, sec, hund))
+        print("Scaling by %0.04f"%(scale))
         cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(f_name,scale,'_'+f_name)
         commands.getstatusoutput(cmd)
         commands.getstatusoutput('mv %s %s'%('_'+f_name , f_name))
@@ -117,4 +117,4 @@ for hour_increment in range(7,19):
     commands.getstatusoutput('sudo chgrp www-data {0}'.format(f_name_abs))
 
     td =  (datetime.now() - start_time)
-    print 'elapsed time = %s' % ( td.seconds )
+    print('elapsed time = %s' % ( td.seconds ))
