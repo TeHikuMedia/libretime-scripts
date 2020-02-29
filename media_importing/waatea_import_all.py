@@ -1,7 +1,6 @@
 import taglib
 import mutagen
 
-import urllib2
 from datetime import datetime, timedelta
 import commands 
 from math import floor
