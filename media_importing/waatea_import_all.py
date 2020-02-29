@@ -85,7 +85,9 @@ for hour_increment in range(7,19):
         elif scale < .95: scale = .95
         print("Length = %d:%02d.%d"%(min, sec, hund))
         print("Scaling by %0.04f"%(scale))
-        cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(f_name,scale,'_'+f_name)
+        cmd = ['ffmpeg', '-i', f_name, 
+            '-filter:a', "atempo={0.04f}".format(scale),
+            '-vn', '_'+f_name]
         p = subprocess.Popen(cmd.split(' '))
         p.communicate()
         p = subprocess.Popen(['mv', '_'+f_name, f_name])
