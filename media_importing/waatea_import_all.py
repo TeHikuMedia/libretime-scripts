@@ -13,6 +13,9 @@ from settings import BASE_MEDIA_DIR
 
 file_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
 
+if not os.path.exists(BASE_MEDIA_DIR):
+    os.mkdir(BASE_MEDIA_DIR)
+    
 if not os.path.exists(file_path):
     os.mkdir(file_path)
 
