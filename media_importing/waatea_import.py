@@ -13,6 +13,9 @@ from settings import BASE_MEDIA_DIR
 
 import os
 
+if not os.path.exists(BASE_MEDIA_DIR):
+    os.mkdir(BASE_MEDIA_DIR)
+
 
 start_time = datetime.now()
 

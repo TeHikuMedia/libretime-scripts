@@ -14,6 +14,10 @@ from import_functions import time_string, convert_media, scale_media
 
 from settings import BASE_MEDIA_DIR
 
+if not os.path.exists(BASE_MEDIA_DIR):
+    os.mkdir(BASE_MEDIA_DIR)
+    
+
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
     offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
