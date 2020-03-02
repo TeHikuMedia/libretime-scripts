@@ -1,5 +1,5 @@
 import taglib
-import urllib
+import urllib.request as request
 from datetime import datetime, timedelta
 import time
 
@@ -28,7 +28,7 @@ start_time = datetime.now()
 url = 'https://tehiku.nz/api/te-reo/nga-take/latest?mp3=True'
 url2 = 'https://tehiku.nz/api/te-reo/nga-take/latest'
 target_length = 60.0*3.0 + 45.0
-response = urllib.request.urlopen(url2)
+response = request.urlopen(url2)
 # headers = response.info().headers
 # for item in headers:
 #     if 'content-disposition' in item.lower():
