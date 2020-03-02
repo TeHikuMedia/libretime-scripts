@@ -1,7 +1,7 @@
 import taglib
 
 from datetime import datetime, timedelta
-import commands 
+from subprocess import Popen, PIPE
 from math import floor
 from ftplib import FTP
 from os import fchown, path
@@ -114,8 +114,9 @@ if get_new_file:
     print(retval)
     print(fd.tags)
 
-    commands.getstatusoutput('sudo chown www-data %s'%(f_name))
-    commands.getstatusoutput('sudo chgrp www-data %s'%(f_name))
+    p = Popen(['sudo', 'chown', 'www-data', f_name])
+    p = Popen(['sudo', 'chgrp', 'www-data', f_name])
+
     os.rename(f_name, os.path.join(f_path, f_name))
 
     td =  (datetime.now() - start_time)
@@ -135,5 +136,6 @@ if get_new_file:
     #     print("Something went wrong while trying to fudge Airtime")
 
 else:
-    commands.getstatusoutput('rm %s'%(f_name) )
+    p = Popen(['rm', f_name])
+
 

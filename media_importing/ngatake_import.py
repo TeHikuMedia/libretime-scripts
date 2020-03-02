@@ -3,7 +3,7 @@ import urllib
 from datetime import datetime, timedelta
 import time
 
-import commands 
+from subprocess import Popen, PIPE
 from math import floor
 from os import fchown, path
 import os
@@ -81,9 +81,9 @@ if get_new_file:
     retval = fd.save()
     print(retval)
 
-    commands.getstatusoutput('sudo chown www-data %s'%(f_name))
-    commands.getstatusoutput('sudo chgrp www-data %s'%(f_name))
-    commands.getstatusoutput('mv %s %s/'%(f_name,f_path))
+    p = Popen(['sudo', 'chown', 'www-data', f_name])
+    p = Popen(['sudo', 'chgrp', 'www-data', f_name])
+    os.rename(f_name, os.path.join(f_path, f_name))
 
     td =  (datetime.now() - start_time)
     print('elapsed time = %s' % ( td.seconds ))
@@ -102,5 +102,4 @@ if get_new_file:
     #     print("Something went wrong while trying to fudge Airtime")
 
 else:
-    commands.getstatusoutput('rm %s'%(f_name) )
-
+    p = Popen(['rm', f_name])
