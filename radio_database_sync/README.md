@@ -13,15 +13,6 @@ The primary structure for our "radio database" is the following folder structure
 
 For example, our Te Hiku Radio folder would look like this,
 
-- 📁 Kapa Haka
-  - 📁 Māori
-    - 📁 Chants
-    - 📁 Kohanga Reo   
-- 📁 Karakia
-  - 📁 Māori
-    - 📁 Karakia Waiata
-    - 📁 Karakia Whakamutunga
-    - 📁 Karakia Tīmatanga
 - 📁 Music
   - 📁 Māori
     - 📁 Country
