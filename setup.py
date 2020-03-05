@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import os
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 print(script_path)
