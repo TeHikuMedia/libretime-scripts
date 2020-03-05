@@ -105,8 +105,22 @@ def scan_folder(ROOT_FOLDER):
                     l = audio['language']
                 except KeyError:
                     l = []
-                if language not in l:
-                    l.insert(0,language)
+                if language:
+                    if language not in l:
+                        l.insert(0,language)
+                        try:
+                            audio['language'] = l
+                        except:
+                            try:
+                                audio['language'] = language
+                            except Exception as e:
+                                logging.warning("Could now write 'langauge' to {0}".format(name))
+                                continue
+
+                        SAVE = True
+                    logging.debug("LANG:    {0}".format(l))
+                elif len(l)>3:
+                    l = l[0:3]
                     try:
                         audio['language'] = l
                     except:
@@ -115,9 +129,6 @@ def scan_folder(ROOT_FOLDER):
                         except Exception as e:
                             logging.warning("Could now write 'langauge' to {0}".format(name))
                             continue
-
-                    SAVE = True
-                logging.debug("LANG:    {0}".format(l))
 
 
                 # TAG: LABEL (AKA ORGANIZATION)
