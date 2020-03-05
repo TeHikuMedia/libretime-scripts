@@ -1,6 +1,5 @@
 import os
 import mutagen
-import magic
 import logging
 import json
 from mutagen.easyid3 import EasyID3
@@ -40,43 +39,6 @@ except Exception as e:
     raise
 
 
-def load_file_tagging(file_path):
-
-    # MIME = 'NONE'
-    # with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
-    #     MIME = m.id_filename(file_path)
-
-    # # Mp3
-    # if MIME in ['audio/mpeg','audio/mp3', 'application/octet-stream']:
-    #     try:
-    #         audio = EasyID3(file_path)
-    #         f = MP3(file_path)
-    #     except (ID3NoHeaderError, HeaderNotFoundError) as e:
-    #         logging.warning("MP3 without Metadata: {}".format(file_path))
-    #         return None, None
-    # # Ogg
-    # elif MIME in ['audio/ogg', 'audio/vorbis', 'audio/x-vorbis', 'application/ogg', 'application/x-ogg']:
-    #     try:
-    #         audio = OggVorbis(file_path)
-    #         f = audio
-    #     except OggVorbisHeaderError:
-    #         logging.warning("OGG without Metadata: {}".format(file_path))
-    #         return None, None
-    # # flac
-    # elif MIME in ['audio/flac', 'audio/flac-x']:
-    #     try:
-    #         audio = FLAC(file_path)
-    #         f = audio
-    #     except FLACNoHeaderError:
-    #         logging.warning("FLAC without Metadata: {}".format(file_path))
-    #         return None, None
-    # else:
-    #     logging.warning("Unsupported mime type: {} -- for audio {}".format(MIME, file_path))
-    #     return None, None
-
-    audio = mutagen.File(file_path, easy=True)
-    return audio, f
-  
 def scan_folder(ROOT_FOLDER):
     NUM_FILES = 0
     for root, dirs, files in os.walk(ROOT_FOLDER):
@@ -126,8 +88,6 @@ def scan_folder(ROOT_FOLDER):
                 logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
 
 
-
-            # audio, f = load_file_tagging(os.path.join(root, name))
             audio = mutagen.File(os.path.join(root, name), easy=True)
 
             try:
