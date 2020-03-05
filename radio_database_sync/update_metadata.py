@@ -107,9 +107,9 @@ def scan_folder(ROOT_FOLDER):
                     l = []
                 if language not in l:
                     l.insert(0,language)
-                    audio['language'] = language
+                    audio['language'] = l
                     SAVE = True
-                logging.debug("LANG:    {0}".format(language))
+                logging.debug("LANG:    {0}".format(l))
 
 
                 # TAG: LABEL (AKA ORGANIZATION)
