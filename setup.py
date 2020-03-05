@@ -17,7 +17,7 @@ LOG_FILE = os.path.join(LOG_DIR, 'update_metadata.log')
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
 if not os.path.exists(LOG_FILE):
-    open(fname, 'a').close()
+    open(LOG_FILE, 'a').close()
 
 setup(
     name="LibreTimeScripts",
