@@ -107,7 +107,15 @@ def scan_folder(ROOT_FOLDER):
                     l = []
                 if language not in l:
                     l.insert(0,language)
-                    audio['language'] = l
+                    try:
+                        audio['language'] = l
+                    except:
+                        try:
+                            audio['language'] = language
+                        except Exception as e:
+                            logging.warning("Could now write 'langauge' to {0}".format(name))
+                            continue
+
                     SAVE = True
                 logging.debug("LANG:    {0}".format(l))
 
