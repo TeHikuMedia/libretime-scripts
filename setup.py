@@ -27,11 +27,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         "mutagen",
-        "file-magic",
     ],
     entry_points={
         "console_scripts": [
-            "radio-db-sync = radio_database_sync.update_metadata:main"
+            "radio-db-metadata-sync = radio_database_sync.update_metadata:main"
         ]
     },
     data_files=data_files
