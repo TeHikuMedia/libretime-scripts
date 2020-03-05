@@ -1,0 +1,2 @@
+# Cron job to update metadata in sync folder very minute
+* * * * * www-data /usr/local/bin/update_metadata
