@@ -12,7 +12,7 @@ data_files = [
 ]
 
 LOG_DIR  = '/var/log/librescripts'
-LOG_FILE = os.path.join(LOG_DIR, LOG_FILE)
+LOG_FILE = os.path.join(LOG_DIR, 'update_metadata.log')
 # Make sure log directory exists
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
