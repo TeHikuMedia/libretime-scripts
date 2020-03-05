@@ -126,7 +126,7 @@ def scan_folder(ROOT_FOLDER):
 
 
 
-            audio, f = load_tile_tagging(os.path.join(root, name))
+            audio, f = load_file_tagging(os.path.join(root, name))
             try:
                 logging.debug("UPDATE:  {0}".format(' '.join(audio['title'])))
             except:
