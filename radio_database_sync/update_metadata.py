@@ -31,7 +31,7 @@ try:
     f = open(CONF_FILE, 'rb')
     d = json.loads(f.read())
     f.close()
-    ROOT_FOLDERS = f['search_folders']
+    ROOT_FOLDERS = d['search_folders']
 except KeyError as e:
     logging.error('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
