@@ -38,3 +38,6 @@ setup(
     data_files=data_files
 
 )
+
+# Update permissions for cron
+call(['chmod', '644', '/etc/cron.d/update_metadata'])
