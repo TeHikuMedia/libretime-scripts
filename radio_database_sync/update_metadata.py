@@ -21,7 +21,7 @@ LOGFILE= "/var/log/librescripts/update_metadata.log"
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
-    level=logging.INFO,
+    level=logging.WARNING,
     filename=LOGFILE,
 )
 
@@ -129,7 +129,7 @@ def scan_folder(ROOT_FOLDER):
                             audio['language'] = language
                         except Exception as e:
                             logging.warning(e)
-                            
+
                             # Maybe it's an m4a and we need to try that
                             try:
                                 audio = MP4(os.path.join(root, name))
