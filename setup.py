@@ -12,7 +12,7 @@ setup(
     version="0.1",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
-    packages=find_packages(),
+    packages=['radio_database_sync'],
     install_requires=[
         "mutagen",
         "python-magic",
