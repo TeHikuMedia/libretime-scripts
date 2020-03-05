@@ -28,8 +28,8 @@ logging.basicConfig(
 
 # Load Configuration
 try:
-    f = open(CONF_FILE, 'r')
-    d = json.loads(f.readlines())
+    f = open(CONF_FILE, 'rb')
+    d = json.loads(f.read())
     f.close()
     ROOT_FOLDERS = f['search_folders']
 except KeyError as e:
