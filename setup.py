@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+script_path = os.path.dirname(os.path.realpath(__file__))
+print(script_path)
+os.chdir(script_path)
 
 data_files = [
     ('/etc/librescripts', ['install/conf/search_folders.json']),
@@ -22,6 +25,7 @@ setup(
         "console_scripts": [
             "radio-db-sync = radio_database_sync.update_metadata:main"
         ]
-    }
+    },
+    data_files=data_files
 
 )
