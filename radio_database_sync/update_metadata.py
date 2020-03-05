@@ -9,6 +9,7 @@ from mutagen.flac import FLAC
 import mutagen
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.mp3 import HeaderNotFoundError
+form mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbisHeaderError
 from mutagen.flac import FLACNoHeaderError
 
@@ -119,16 +120,23 @@ def scan_folder(ROOT_FOLDER):
 
                         SAVE = True
                     logging.debug("LANG:    {0}".format(l))
-                elif len(l)>3:
-                    l = l[0:3]
+                elif len(l)>1:
+                    l = l[0]
                     try:
                         audio['language'] = l
                     except:
                         try:
                             audio['language'] = language
                         except Exception as e:
-                            logging.warning("Could now write 'langauge' to {0}".format(name))
-                            continue
+                            logging.warning(e)
+                            
+                            # Maybe it's an m4a and we need to try that
+                            try:
+                                audio = MP4(os.path.join(root, name))
+                                audio['language'] = language
+                            except:
+                                logging.warning("Could not write 'langauge' to {0}".format(name))
+                                continue
 
 
                 # TAG: LABEL (AKA ORGANIZATION)
