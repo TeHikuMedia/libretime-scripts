@@ -40,7 +40,7 @@ except Exception as e:
     raise
 
 
-def load_tile_tagging(file_path):
+def load_file_tagging(file_path):
 
     MIME = 'NONE'
     with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
