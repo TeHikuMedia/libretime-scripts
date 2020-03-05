@@ -6,7 +6,7 @@ print(script_path)
 os.chdir(script_path)
 
 data_files = [
-    ('/etc/librescripts', ['install/conf/search_folders.json']),
+    ('/etc/librescripts', ['install/conf/conf.json']),
     ('/etc/cron.d',       ['install/cron/update_metadata']),
 ]
 
