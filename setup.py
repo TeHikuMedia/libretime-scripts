@@ -27,8 +27,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "mutagen",
-        "python-magic",
-
+        "file-magic",
     ],
     entry_points={
         "console_scripts": [
@@ -36,7 +35,6 @@ setup(
         ]
     },
     data_files=data_files
-
 )
 
 # Update permissions for cron

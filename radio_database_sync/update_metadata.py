@@ -42,7 +42,9 @@ except Exception as e:
 
 def load_tile_tagging(file_path):
 
-    MIME = magic.from_file(file_path, mime=True)
+    MIME = 'NONE'
+    with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+        MIME = m.id_filename(file_path)
 
     # Mp3
     if MIME in ['audio/mpeg','audio/mp3', 'application/octet-stream']:
