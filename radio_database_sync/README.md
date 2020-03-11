@@ -7,9 +7,10 @@ Scripts that update audio metadata based on a folder structure.
 The primary structure for our "radio database" is the following folder structure, where each folder represents an audio tag that we write to the audio file's metadata: 
 - Label
   - Language
-    - #Unsorted
+    - _Unsorted
     - Genre
       - #Archive
+      - #Trash
 
 For example, our Te Hiku Radio folder would look like this,
 
