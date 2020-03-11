@@ -17,7 +17,7 @@ import sys
 import os
 
 
-from tehiku_import.import_functions import time_string, convert_media, scale_media
+from .import_functions import time_string, convert_media, scale_media
 
 
 #parser.add_argument("--collection", help="Collection slug name, separated by comma.")
