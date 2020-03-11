@@ -40,6 +40,7 @@ def get_waatea_all():
 def get_waatea_now():
     time = datetime.now() + timedelta(hours=1)
     time = timezone.localize(time)
+    print("Getting news for {0}".format(time.strftime('%H:%M')))
     get_waatea(time)
 
 
@@ -163,7 +164,6 @@ def get_waatea(time):
 
 
 def main():
-    print(time_string)
     if args.all:
         get_waatea_all()
     else:
