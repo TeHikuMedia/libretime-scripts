@@ -2,9 +2,12 @@
 #24,53 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=panui
 #23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-tohu
 #23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-take --am-pm=True
-31,42-46,50,55,56,57,58,59 06-17 * * * root /usr/local/bin/waatea-fetch
 #*/10 * * * * root /usr/local/bin/tehiku-fetch --collection=kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga --remove-after-days=7
 #15 5,17 * * * /home/ubuntu/sync_db_to_bucket.sh
 #1 0 * * MON-SAT /home/ubuntu/sync_files_no_md5.sh
 #1 0 * * SUN /home/ubuntu/sync_files_md5.sh
 #42 09-20 * * * /usr/bin/python2.7 /home/ubuntu/media_import/media_importing/haukainga_import.py > /home/ubuntu/cron.log
+#
+#
+#
+*/5,56-59 06-17 * * * www-data /usr/local/bin/waatea-fetch
