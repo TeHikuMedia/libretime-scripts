@@ -4,6 +4,7 @@ import taglib
 import argparse
 
 from datetime import datetime, timedelta
+import pytz
 from subprocess import Popen, PIPE
 from math import floor
 from ftplib import FTP
@@ -24,7 +25,7 @@ from tehiku_import.import_functions import time_string, convert_media, scale_med
 #parser.add_argument("--am-pm", help="Whether to write file with AM/PM")
 #parser.add_argument("--remove-after-days", help="Remove file if it's older than X days.")
 
-
+timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
 args = parser.parse_args()
@@ -32,11 +33,13 @@ args = parser.parse_args()
 def get_waatea_all():
     for hour_increment in range(7,19):
         time = datetime.strptime('2015-12-09 %02d:00'%(hour_increment),'%Y-%m-%d %H:%M')
+        time = timezone.localize(time)
         get_waatea(time)
 
 
 def get_waatea_now():
     time = datetime.now() + timedelta(hours=1)
+    time = timezone.localize(time)
     get_waatea(time)
 
 
