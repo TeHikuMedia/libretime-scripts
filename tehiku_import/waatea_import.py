@@ -157,7 +157,8 @@ def get_waatea(time):
         p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
         p.communicate()
 
-        os.rename(tmp_file, os.path.join(f_path, f_name))
+        p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
         td =  (datetime.now() - start_time)
         print('elapsed time = %s' % ( td.seconds ))
