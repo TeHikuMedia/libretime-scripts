@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+# from __future__ import absolute_import
 
 import taglib
 import argparse
@@ -11,13 +11,13 @@ from os import fchown, path
 from pwd import getpwnam  
 from grp import getgrnam
 from shutil import copyfile
-# from settings import BASE_MEDIA_DIR
+
 
 import sys
 import os
 
-
-# from import_functions import time_string, convert_media, scale_media
+from .settings import BASE_MEDIA_DIR
+from .import_functions import time_string, convert_media, scale_media
 
 
 #parser.add_argument("--collection", help="Collection slug name, separated by comma.")
