@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import taglib
 import argparse
 
@@ -15,7 +17,7 @@ import sys
 import os
 
 
-from .import_functions import time_string, convert_media, scale_media
+from import_functions import time_string, convert_media, scale_media
 
 
 #parser.add_argument("--collection", help="Collection slug name, separated by comma.")
@@ -156,6 +158,7 @@ def get_waatea(time):
 
 
 def main(args):
+    print(time_string)
     if args.all:
         get_waatea_all()
     else:
