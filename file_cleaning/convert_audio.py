@@ -74,7 +74,7 @@ def scan_folder(ROOT_FOLDER):
                     logging.info("Converted {0} -> {1}".format(name.encode('utf-8'), out_file.encode('utf-8')))
                     CON_FILES = CON_FILES + 1
                     # Move old file to #Trash
-                    trash = os.path.join(root, '#Trash')
+                    trash = os.path.join(ROOT_FOLDER, '#Trash', root)
                     if not os.path.exists(trash):
                         os.mkdir(trash)
                     call(['mv', FILE_PATH, os.path.join(trash, name)])
