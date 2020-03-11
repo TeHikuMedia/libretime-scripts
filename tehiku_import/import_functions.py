@@ -45,6 +45,8 @@ def scale_media(file_path, target_length, length=0, max_scale=0.05, max_seconds_
         cmd = 'ffmpeg -i %s -af atempo=%0.04f -vn %s'%(file_path,scale,out)
         p = Popen(cmd.split(' '), stdin=PIPE, stderr=PIPE)
         out, err = p.communicate()
+        print(out)
+        print(err)
         Popen(['mv', out, file_path])
 
     return time_string(str(scale*length))

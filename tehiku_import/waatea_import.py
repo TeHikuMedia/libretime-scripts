@@ -133,8 +133,9 @@ def get_waatea(time):
 
         try:
             media_length = scale_media(tmp_file, target_length)
-        except:
+        except Exception as e:
             print("Error scaling media.")
+            print(e)
             return
 
         fd = taglib.File(tmp_file)
