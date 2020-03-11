@@ -44,8 +44,9 @@ setup(
 # Update permissions for cron
 for file in data_files:
     path = file[0]
-    file_name = file[1][0].split('/')[-1]
-    file_path = os.path.join(path, file_name)
-    print('Modifying {0}'.format(file_path))
+    if 'cron.d' in path:
+        file_name = file[1][0].split('/')[-1]
+        file_path = os.path.join(path, file_name)
+        print('Modifying {0}'.format(file_path))
 
-    call(['chmod', '644', file_path])
+        call(['chmod', '644', file_path])
