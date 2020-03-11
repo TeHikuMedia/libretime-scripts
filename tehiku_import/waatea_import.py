@@ -33,13 +33,13 @@ args = parser.parse_args()
 def get_waatea_all():
     for hour_increment in range(7,19):
         time = datetime.strptime('2015-12-09 %02d:00'%(hour_increment),'%Y-%m-%d %H:%M')
-        time = timezone.localize(time)
+        time = time.astimezone(timezone)
         get_waatea(time)
 
 
 def get_waatea_now():
     time = datetime.now() + timedelta(hours=1)
-    time = timezone.localize(time)
+    time = time.astimezone(timezone)
     print("Getting news for {0}".format(time.strftime('%H:%M')))
     get_waatea(time)
 
