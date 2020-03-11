@@ -165,12 +165,11 @@ def get_waatea(time):
         print(retval)
         print(fd.tags)
 
-        p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-
         p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chown', 'www-data', final_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', final_file], stdin=PIPE, stdout=PIPE)
         p.communicate()
 
         td =  (datetime.now() - start_time)
@@ -178,7 +177,8 @@ def get_waatea(time):
 
 
     else:
-        p = Popen(['rm', tmp_file])
+        p = Popen(['rm', tmp_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
 
 def main():
