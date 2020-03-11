@@ -93,7 +93,7 @@ def get_waatea(time):
         if '<recorded>' in line:
             r_date = line.replace('<recorded>','').replace('</recorded>','').strip()
 
-    record_date = datetime.strptime(r_date,'%m/%d/%Y %H:%M:%S')
+    record_date = datetime.strptime(r_date,'%m/%d/%Y %H:%M:%S').astimezone(timezone)
     print("Recorded", record_date)
 
     get_new_file = False
