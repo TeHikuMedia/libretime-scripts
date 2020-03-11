@@ -103,10 +103,8 @@ def get_waatea(time):
         print(fd.tags)
         try:
             file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
-        except ValueError:
-            file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y')
-        except KeyError:
-            file_record_date = datetime.strptime("1991-01-01", '%Y-%m-%d')
+        except ValueError, KeyError as e:
+            file_record_date = os.path.getmtime(final_file)
                         
         print("Old recorded", file_record_date)
         if int(record_date.strftime('%Y%m%d%H%M%S')) > int(file_record_date.strftime('%Y%m%d%H%M%S')):
@@ -140,13 +138,13 @@ def get_waatea(time):
         fd.tags[u'DATE'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
         fd.tags[u'TIME'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
         fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
-        fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
+        fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News' #fd.tags[u'TITLE'][0].split(' - ')[0].strip()
         fd.tags[u'ARTIST'] = u"Waatea"
         fd.tags[u'LABEL'] = u"News-Auto-Imported, Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
         fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
-        fd.tags[u'OWNER'] = u"admin"
-        fd.tags[u'ORGANIZATION'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
-        fd.tags[u'LABEL'] = u"*** NEWS *** Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
+        fd.tags[u'OWNER'] = u"Te Hiku Media"
+        fd.tags[u'ORGANIZATION'] = u"News"
+        fd.tags[u'LABEL'] = u"News"
         fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
         fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
         retval = fd.save()
