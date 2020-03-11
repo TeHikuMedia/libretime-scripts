@@ -25,7 +25,9 @@ import os
 #parser.add_argument("--remove-after-days", help="Remove file if it's older than X days.")
 
 
-
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
+args = parser.parse_args()
 
 def get_waatea_all():
     for hour_increment in range(7,19):
@@ -157,7 +159,7 @@ def get_waatea(time):
         p = Popen(['rm', tmp_file])
 
 
-def main(args):
+def main():
     print(time_string)
     if args.all:
         get_waatea_all()
@@ -167,8 +169,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
-    args = parser.parse_args()
-    print(args)
-    main(args)
+
+    
+    main()
