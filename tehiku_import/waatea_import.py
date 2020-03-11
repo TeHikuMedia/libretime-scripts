@@ -155,8 +155,10 @@ def get_waatea(time):
         print(retval)
         print(fd.tags)
 
-        p = Popen(['chown', 'www-data', tmp_file])
-        p = Popen(['chgrp', 'www-data', tmp_file])
+        p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
         os.rename(tmp_file, os.path.join(f_path, f_name))
 
