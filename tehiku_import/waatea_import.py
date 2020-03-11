@@ -77,7 +77,7 @@ def get_waatea(time):
         os.mkdir(tmp_path)
 
     tmp_file = os.path.join(tmp_path, f_name)
-    final_file = os.path.join(tmp_path, f_name)
+    final_file = os.path.join(f_path, f_name)
 
     target_length = 60*6.0
     print("Fetching %s"%(f_name))
@@ -138,6 +138,7 @@ def get_waatea(time):
         fd = taglib.File(tmp_file)
         a = fd.tags[u'TITLE'][0].split(' - ')[0].strip()
         fd.tags[u'DATE'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
+        fd.tags[u'TIME'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
         fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
         fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + fd.tags[u'TITLE'][0].split(' - ')[0].strip()
         fd.tags[u'ARTIST'] = u"Waatea"
