@@ -134,3 +134,13 @@ for hour_increment in range(7,19):
 
     td =  (datetime.now() - start_time)
     print('elapsed time = %s' % ( td.seconds ))
+
+
+def main():
+    for folder in ROOT_FOLDERS:
+        logging.info('Scanning {0}'.format(folder))
+        scan_folder(folder)
+
+
+if __name__ == "__main__":
+    main()

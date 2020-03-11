@@ -9,7 +9,7 @@ from mutagen.flac import FLAC
 import mutagen
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.mp3 import HeaderNotFoundError
-form mutagen.mp4 import MP4
+from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbisHeaderError
 from mutagen.flac import FLACNoHeaderError
 
@@ -21,7 +21,7 @@ LOGFILE= "/var/log/librescripts/update_metadata.log"
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
-    level=logging.WARNING,
+    level=logging.INFO,
     filename=LOGFILE,
 )
 
@@ -89,13 +89,17 @@ def scan_folder(ROOT_FOLDER):
                 logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
 
 
-            audio = mutagen.File(os.path.join(root, name), easy=True)
+            try:
+                audio = mutagen.File(os.path.join(root, name), easy=True)
+            except Exception as e:
+                logging.warning('Could not load file with mutagen: {0}'.format(name))
+                continue
 
             try:
-                logging.debug("UPDATE:  {0}".format(' '.join(audio['title'])))
+                logging.debug("UPDATE:  {0}".format(' '.join(audio['title'].encode('utf-8'))))
             except:
-                logging.debug("UPDATE:  {0}".format(name))
-            logging.debug('TAGS:   {0}'.format(audio))
+                logging.debug("UPDATE:  {0}".format(name.encode('utf-8')))
+            logging.debug('TAGS:    {0}'.format(audio))
 
 
             SAVE = False
@@ -107,8 +111,8 @@ def scan_folder(ROOT_FOLDER):
                 except KeyError:
                     l = []
                 if language:
-                    if language not in l:
-                        l.insert(0,language)
+                    if [language] != l:
+                        l = [language]
                         try:
                             audio['language'] = l
                         except:
@@ -117,27 +121,8 @@ def scan_folder(ROOT_FOLDER):
                             except Exception as e:
                                 logging.warning("Could now write 'langauge' to {0}".format(name))
                                 continue
-
                         SAVE = True
                     logging.debug("LANG:    {0}".format(l))
-                elif len(l)>1:
-                    l = l[0]
-                    try:
-                        audio['language'] = l
-                    except:
-                        try:
-                            audio['language'] = language
-                        except Exception as e:
-                            logging.warning(e)
-
-                            # Maybe it's an m4a and we need to try that
-                            try:
-                                audio = MP4(os.path.join(root, name))
-                                audio['language'] = language
-                            except:
-                                logging.warning("Could not write 'langauge' to {0}".format(name))
-                                continue
-
 
                 # TAG: LABEL (AKA ORGANIZATION)
                 try:
@@ -147,12 +132,9 @@ def scan_folder(ROOT_FOLDER):
                         t = audio['organization']
                     except KeyError:
                         t = []
-                if label not in t:
-                    t.insert(0, label)
-                    SAVE = True
-                # Remove genre from label
-                if genre in t:
-                    t.remove(genre)
+                # Overwrite label field
+                if [label] != t:
+                    t = [label]
                     SAVE = True
                 logging.debug("LABEL:   {0}".format(t))
                 if SAVE:
@@ -162,7 +144,6 @@ def scan_folder(ROOT_FOLDER):
                         pass
                     audio['organization'] = t
 
-
                 # TAG: GENRE
                 try:
                     g = audio['genre']
@@ -170,15 +151,19 @@ def scan_folder(ROOT_FOLDER):
                     g = []
 
                 if genre:
-                    if genre not in g:
+                    if [genre] != g:
                         SAVE = True
-                        g.insert(0, genre)
+                        g = [genre]
                         logging.debug("GENRE:   {0}".format(t))
                         audio['genre'] = g
 
                 if SAVE:
-                    logging.info("Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}".format(name, audio, l, g, t))
+                    logging.info(
+                        (u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"\
+                            .format(name, audio, l, g, t)))
                     audio.save()
+
+                logging.debug(audio)
 
 
     logging.info("Scanned {0} files in {1}".format(NUM_FILES, ROOT_FOLDER))

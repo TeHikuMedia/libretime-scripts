@@ -8,7 +8,7 @@ os.chdir(script_path)
 
 data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
-    ('/etc/cron.d',           ['install/cron/update_metadata']),
+    #('/etc/cron.d',           ['install/cron/update_metadata']),
 ]
 
 LOG_DIR  = '/var/log/librescripts'
@@ -27,10 +27,14 @@ setup(
     packages=find_packages(),
     install_requires=[
         "mutagen",
+        "pytaglib",
     ],
     entry_points={
         "console_scripts": [
-            "radio-db-metadata-sync = radio_database_sync.update_metadata:main"
+            "radio-db-metadata-sync = radio_database_sync.update_metadata:main",
+            "waatea-fetch = tehiku_import.waatea_import:main",
+            "waatea-fetch-all = tehiku_import.waatea_import_all:main",
+            # "tehiku-fetch = tehiku_import.tehiku_fetch:main",
         ]
     },
     data_files=data_files

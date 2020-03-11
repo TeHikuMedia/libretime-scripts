@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 from subprocess import Popen, PIPE
 from math import floor
-
+import json
+import os
 
 def time_string(length):
     length = str(length)
@@ -20,12 +21,11 @@ def convert_media(from_format, to_format, file_path):
 
 def scale_media(file_path, target_length, length=0, max_scale=0.05, max_seconds_delta=1):
     if length==0:
-
-
-        command = 'ffprobe -i %s -show_entries format=duration -v quiet -of csv="p=0"'%(file_path)
+        command = 'ffprobe -i %s -show_entries format=duration -v quiet -of json'%(file_path)
         p = Popen(command.split(' '), stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
-        media_length = time_string(str(out))
+        data = json.loads(out)
+        media_length = time_string(str(data['format']['duration']))
         length = media_length['length']
 
     if abs(target_length - length)<max_seconds_delta:
@@ -39,9 +39,12 @@ def scale_media(file_path, target_length, length=0, max_scale=0.05, max_seconds_
         print("Length = %d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds']))
         print("Target Length = %d"%(target_length))
         print("Scaling by %0.04f"%(scale))
-        cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(file_path,scale,'_'+file_path)
+
+        path = '/'.join(file_path.split('/')[0:-1])
+        out = os.path.join(path, 'out.'+file_path.split('.')[-1])
+        cmd = 'ffmpeg -i %s -filter:a "atempo=%0.04f" -vn %s'%(file_path,scale,out)
         Popen(cmd.split(' '))
-        Popen(['mv', '_'+file_path, file_path])
+        Popen(['mv', out, file_path])
 
     return time_string(str(scale*length))
 
