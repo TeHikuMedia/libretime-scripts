@@ -20,7 +20,7 @@ if not os.path.exists(LOG_FILE):
     open(LOG_FILE, 'a').close()
 
 setup(
-    name="LibreTimeScripts",
+    name="libretime_scripts",
     version="0.1",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
