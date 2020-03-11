@@ -9,6 +9,7 @@ os.chdir(script_path)
 data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
     #('/etc/cron.d',           ['install/cron/update_metadata']),
+    ('/etc/cron.d',           ['install/cron/tehiku_import']),
 ]
 
 LOG_DIR  = '/var/log/librescripts'
