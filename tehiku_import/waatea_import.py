@@ -131,7 +131,11 @@ def get_waatea(time):
         print("Downloading new file...")
         # check if we need to update the file
 
-        media_length = scale_media(tmp_file, target_length)
+        try:
+            media_length = scale_media(tmp_file, target_length)
+        except:
+            print("Error scaling media.")
+            return
 
         fd = taglib.File(tmp_file)
         a = fd.tags[u'TITLE'][0].split(' - ')[0].strip()
