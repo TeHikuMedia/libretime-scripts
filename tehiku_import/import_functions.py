@@ -42,7 +42,7 @@ def scale_media(file_path, target_length, length=0, max_scale=0.05, max_seconds_
 
         path = '/'.join(file_path.split('/')[0:-1])
         out = os.path.join(path, 'out.'+file_path.split('.')[-1])
-        cmd = 'ffmpeg -i %s -af atempo=%0.04f -vn %s'%(file_path,scale,out)
+        cmd = 'ffmpeg -y -i %s -af atempo=%0.04f -vn %s'%(file_path,scale,out)
         p = Popen(cmd.split(' '), stdin=PIPE, stderr=PIPE)
         out, err = p.communicate()
         print(out)
