@@ -33,7 +33,7 @@ setup(
         "console_scripts": [
             "radio-db-metadata-sync = radio_database_sync.update_metadata:main",
             "waatea-fetch = tehiku_import.waatea_import:main",
-            "waatea-fetch-all = tehiku_import.waatea_import_all:main",
+            # "waatea-fetch-all = tehiku_import.waatea_import_all:main",
             # "tehiku-fetch = tehiku_import.tehiku_fetch:main",
         ]
     },
