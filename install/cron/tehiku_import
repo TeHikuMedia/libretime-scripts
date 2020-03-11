@@ -10,4 +10,4 @@
 #
 #
 #
-*/5,56-59 06-17 * * * www-data /usr/local/bin/waatea-fetch
+*/5,56-59 06-17 * * * root /usr/local/bin/waatea-fetch

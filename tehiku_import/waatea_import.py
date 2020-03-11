@@ -50,6 +50,11 @@ def get_waatea(time):
 
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
+        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+
 
     start_time = datetime.now()
 
@@ -71,10 +76,18 @@ def get_waatea(time):
     f_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
     if not os.path.exists(f_path):
         os.mkdir(f_path)
+        p = Popen(['chown', 'www-data', f_path], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', f_path], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
     tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
     if not os.path.exists(tmp_path):
         os.mkdir(tmp_path)
+        p = Popen(['chown', 'www-data', tmp_path], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', tmp_path], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
     tmp_file = os.path.join(tmp_path, f_name)
     final_file = os.path.join(f_path, f_name)
