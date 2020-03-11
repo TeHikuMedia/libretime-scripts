@@ -1,3 +1,3 @@
-import import_functions
+from .import_functions import time_string, convert_media, scale_media
 
-__all__ = ['import_functions']
+__all__ = ['time_string', 'convert_media', 'scale_media']
