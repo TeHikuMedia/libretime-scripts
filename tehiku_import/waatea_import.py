@@ -64,7 +64,7 @@ def get_waatea(time):
             f_id = item.split(' ')[0].strip()
     if f_id == '':
         print("No News for this Hour")
-        raise NameError('news sport %s%s'%(hour,ampm))
+        return
 
     f_name = 'Waatea_News_%s%s.mp3'%(hour,ampm)
     f_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
