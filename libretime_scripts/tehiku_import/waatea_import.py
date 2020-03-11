@@ -11,7 +11,7 @@ from os import fchown, path
 from pwd import getpwnam  
 from grp import getgrnam
 from shutil import copyfile
-from settings import BASE_MEDIA_DIR
+# from settings import BASE_MEDIA_DIR
 
 import sys
 import os
