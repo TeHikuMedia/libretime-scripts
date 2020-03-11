@@ -98,10 +98,7 @@ def get_waatea(time):
     get_new_file = False
     # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
     if path.isfile('%s/%s'%(f_path, f_name)):
-        # Copy file then probe as FTAG seems to cause a file change event that airtime media monitor reads
-        copyfile(path.join(f_path, f_name), path.join(tmp_path, 'tmp.mp3'))
-        fd = taglib.File(path.join(tmp_path, 'tmp.mp3'))
-        print(fd)
+        fd = taglib.File(path.join(f_path, f_name))
         print(fd.tags)
         try:
             file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
