@@ -77,6 +77,7 @@ def get_waatea(time):
         os.mkdir(tmp_path)
 
     tmp_file = os.path.join(tmp_path, f_name)
+    final_file = os.path.join(tmp_path, f_name)
 
     target_length = 60*6.0
     print("Fetching %s"%(f_name))
@@ -97,16 +98,15 @@ def get_waatea(time):
 
     get_new_file = False
     # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
-    if path.isfile('%s/%s'%(f_path, f_name)):
-        fd = taglib.File(path.join(f_path, f_name))
+    if path.isfile(final_file):
+        fd = taglib.File(final_file)
         print(fd.tags)
         try:
             file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
         except ValueError:
-            file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d')
+            file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y')
         except KeyError:
             file_record_date = datetime.strptime("1991-01-01", '%Y-%m-%d')
-            get_new_file = True
                         
         print("Old recorded", file_record_date)
         if int(record_date.strftime('%Y%m%d%H%M%S')) > int(file_record_date.strftime('%Y%m%d%H%M%S')):
