@@ -104,7 +104,7 @@ def get_waatea(time):
         try:
             file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
         except (ValueError, KeyError) as e:
-            file_record_date = datetime.date.fromtimestamp(os.path.getmtime(final_file))
+            file_record_date = datetime.fromtimestamp(os.path.getmtime(final_file))
                         
         print("Old recorded", file_record_date)
         if int(record_date.strftime('%Y%m%d%H%M%S')) > int(file_record_date.strftime('%Y%m%d%H%M%S')):
