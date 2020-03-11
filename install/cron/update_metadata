@@ -1,2 +1,2 @@
 # Cron job to update metadata in sync folder very minute
-* * * * * root /usr/local/bin/radio-db-metadata-sync
+* * * * * root /usr/local/bin/radio-db-metadata-sync > /var/log/airtime/cron.log
