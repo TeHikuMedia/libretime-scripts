@@ -43,11 +43,16 @@ except Exception as e:
 def scan_folder(ROOT_FOLDER):
     NUM_FILES = 0
     for root, dirs, files in os.walk(ROOT_FOLDER):
+        if '#' in root:
+            continue
         for name in files:
             NUM_FILES = NUM_FILES + 1
             # print("Checking {0}".format(os.path.join(root,name)))
 
             if '.' is name[0]:
+                logging.debug('Skipping {0}'.format(name))
+                continue
+            elif '#' in root:
                 logging.debug('Skipping {0}'.format(name))
                 continue
             elif name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg':

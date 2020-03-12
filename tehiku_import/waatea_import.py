@@ -20,11 +20,6 @@ import os
 from tehiku_import.settings import BASE_MEDIA_DIR
 from tehiku_import.import_functions import time_string, convert_media, scale_media
 
-
-#parser.add_argument("--collection", help="Collection slug name, separated by comma.")
-#parser.add_argument("--am-pm", help="Whether to write file with AM/PM")
-#parser.add_argument("--remove-after-days", help="Remove file if it's older than X days.")
-
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")

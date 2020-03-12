@@ -2,7 +2,6 @@
 #24,53 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=panui
 #23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-tohu
 #23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-take --am-pm=True
-#*/10 * * * * root /usr/local/bin/tehiku-fetch --collection=kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga --remove-after-days=7
 #15 5,17 * * * /home/ubuntu/sync_db_to_bucket.sh
 #1 0 * * MON-SAT /home/ubuntu/sync_files_no_md5.sh
 #1 0 * * SUN /home/ubuntu/sync_files_md5.sh
@@ -11,3 +10,4 @@
 #
 #
 */5,56-59 5-17 * * *	root	/usr/local/bin/waatea-fetch > /var/log/airtime/cron.a.log
+*/5 * * * * root /usr/local/bin/tehiku-fetch --collection=kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga --remove-after-days=7 > /var/log/airtime/cron.interviews.log

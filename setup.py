@@ -22,7 +22,7 @@ if not os.path.exists(LOG_FILE):
 
 setup(
     name="libretime_scripts",
-    version="0.1",
+    version="0.2",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
     packages=find_packages(),
@@ -35,7 +35,7 @@ setup(
             "radio-db-metadata-sync = radio_database_sync.update_metadata:main",
             "waatea-fetch = tehiku_import.waatea_import:main",
             # "waatea-fetch-all = tehiku_import.waatea_import_all:main",
-            # "tehiku-fetch = tehiku_import.tehiku_fetch:main",
+            "tehiku-fetch = tehiku_import.tehiku_fetch:main",
         ]
     },
     data_files=data_files
