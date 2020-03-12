@@ -1,13 +1,10 @@
 # m    h  dom mon dow   user command
-#24,53 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=panui
-#23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-tohu
-#23,54 07-20 * * * root /usr/local/bin/tehiku-fetch --collection=nga-take --am-pm=True
 #15 5,17 * * * /home/ubuntu/sync_db_to_bucket.sh
 #1 0 * * MON-SAT /home/ubuntu/sync_files_no_md5.sh
 #1 0 * * SUN /home/ubuntu/sync_files_md5.sh
-#42 09-20 * * * /usr/bin/python2.7 /home/ubuntu/media_import/media_importing/haukainga_import.py > /home/ubuntu/cron.log
 #
 #
-#
-*/5,56-59 5-17 * * *	root	/usr/local/bin/waatea-fetch > /var/log/airtime/cron.a.log
-*/5 * * * * root /usr/local/bin/tehiku-fetch --collection=kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga --remove-after-days=7 > /var/log/airtime/cron.interviews.log
+*/15,56-59 5-17 * * *	root	/usr/local/bin/waatea-fetch > /var/log/airtime/cron.waatea.log
+*/15 6-19 * * *	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 > /var/log/airtime/cron.interviews.log
+*/10 8-17 * * *	root	/usr/local/bin/tehiku-fetch -c panui,nga-tohu -d > /var/log/airtime/cron.daily.log
+*/15,26-29 6-18 * * *	root	/usr/local/bin/tehiku-fetch -c nga-take -a > /var/log/airtime/cron.ampm.log

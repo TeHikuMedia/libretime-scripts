@@ -12,7 +12,7 @@ import argparse
 import os
 import sys
 
-
+from import_functions import scale_media
 from settings import BASE_MEDIA_DIR
 
 timezone = pytz.timezone("Pacific/Auckland")
@@ -23,12 +23,13 @@ parser.add_argument("-d", "--daily", help="Whether to overwrite file with latest
 parser.add_argument("-r", "--remove-after-days", help="Remove file if it's older than X days.")
 parser.add_argument("-n", "--get-n-items", help="Download n latests items")
 parser.add_argument("-l", "--label", help="Label to apply to the file.")
+parser.add_argument("-t", "--target-length", help="Duration in seconds that the file should be")
 args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
 ROOT_DIR = ''
 STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
-MD5_CMD = 'md5'
+MD5_CMD = 'md5sum'
 
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
@@ -56,7 +57,7 @@ def hash_exists(md5):
 
 def get_item_from_collection(
         collection, num_items=20, expire=7, ampm=False, daily=False,
-        label=''):
+        label='', duration=None):
 
     collection_url = 'https://tehiku.nz/api/?collection={0}'.format(collection)
 
@@ -70,7 +71,7 @@ def get_item_from_collection(
     while count < num_items:
         count = count + 1
         try:
-            pub_id = pub_ids.pop()
+            pub_id = pub_ids.pop(0)
         except:
             break
         DOWNLOAD = False
@@ -86,6 +87,10 @@ def get_item_from_collection(
         elif ampm:
             local_time = publish_date.astimezone(timezone)
             file_name = "tehiku_{0}_{1}".format(collection['id'], local_time.strftime('%p'))
+            publication['headline'] = ' '.join([
+                collection['name'].title(),
+                local_time.strftime('%p'),
+                local_time.strftime('%A')])
         else:
             file_name = "tehiku_{0}_{1}".format(collection['id'], pub_id)
         print(file_name)
@@ -143,7 +148,9 @@ def get_item_from_collection(
             md5_local = m.groups()[0]
             store_hash(md5_local)
 
-            
+            if duration:
+                scale_media(file_path, duration)
+
             p = Popen(['chown', 'www-data', file_url], stdin=PIPE, stdout=PIPE)
             p.communicate()
             p = Popen(['chgrp', 'www-data', file_url], stdin=PIPE, stdout=PIPE)
@@ -187,7 +194,6 @@ def get_item_from_collection(
                 print(e)
                 print('Could not set album art')
 
-
             
 
 def main():
@@ -202,10 +208,26 @@ def main():
     else:
         EXPIRE = 7
 
+    if args.am_pm:
+        NUM_GET = 1
+
+    if args.daily:
+        NUM_GET = 1
+
+    if args.target_length:
+        DURATION = int(args.target_length)
+    else:
+        DURATION = None
+
     if args.collection:
         slugs = args.collection.split(',')
         for slug in slugs:
-            get_item_from_collection(slug, NUM_GET, EXPIRE, args.am_pm, args.daily)
+            get_item_from_collection(
+                slug, num_items=NUM_GET,
+                expire=EXPIRE,
+                ampm=args.am_pm,
+                daily=args.daily,
+                duration=DURATION)
     else:
         print("Must specify collection name.")
 
