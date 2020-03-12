@@ -23,6 +23,7 @@ from tehiku_import.import_functions import time_string, convert_media, scale_med
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
+parser.add_argument("-t", "--hour", help="Hour to download")
 args = parser.parse_args()
 
 def get_waatea_all():
@@ -37,6 +38,13 @@ def get_waatea_now():
     time = datetime.now() + timedelta(hours=1)
     time = time.astimezone(timezone)
     print("Getting news for {0}".format(time.strftime('%H:%M')))
+    get_waatea(time)
+
+
+def get_waatea_hour(hour):
+    time = datetime.strptime('2015-12-09 %02d:00'%(hour),'%Y-%m-%d %H:%M')
+    time = timezone.localize(time)
+    time = time.astimezone(timezone)
     get_waatea(time)
 
 
@@ -143,31 +151,27 @@ def get_waatea(time):
             print(e)
             return
 
-        fd = taglib.File(tmp_file)
-        a = fd.tags[u'TITLE'][0].split(' - ')[0].strip()
-        fd.tags[u'DATE'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
-        fd.tags[u'TIME'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
-        fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
+        p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+
+        print(final_file)
+        print(tmp_file)
+        fd = taglib.File(final_file)
+        fd.tags[u'DATE'] = record_date.strftime('%Y')
+        # fd.tags[u'TIME'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
+        # fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
         fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
         fd.tags[u'ARTIST'] = u"Waatea"
         fd.tags[u'LANGUAGE'] = u"Māori"
-        fd.tags[u'LABEL'] = u"News-Auto-Imported, Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
-        fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
         fd.tags[u'OWNER'] = u"Te Hiku Media"
         fd.tags[u'ORGANIZATION'] = u"News"
-        fd.tags[u'LABEL'] = u"News"
-        fd.tags[u'LENGTH'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
-        fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
-        retval = fd.save()
-        print(retval)
+        # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
+        fd.save()
         print(fd.tags)
-
-        p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chown', 'www-data', final_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', final_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
 
         td =  (datetime.now() - start_time)
         print('elapsed time = %s' % ( td.seconds ))
@@ -181,6 +185,8 @@ def get_waatea(time):
 def main():
     if args.all:
         get_waatea_all()
+    if args.hour:
+        get_waatea_hour(int(args.hour))
     else:
         get_waatea_now()
     sys.exit(0)

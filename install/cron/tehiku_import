@@ -5,7 +5,7 @@
 #
 #
 */15,56-59 17-23,0-6 * * 1-5	root	/usr/local/bin/waatea-fetch > /var/log/airtime/cron.waatea.log
-*/15 19-23,0-7 * * 1-5	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 > /var/log/airtime/cron.interviews.log
+*/15 19-23,0-7 * * 1-5	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 -l Interview > /var/log/airtime/cron.interviews.log
 */10 19-23,0-6 * * 1-5	root	/usr/local/bin/tehiku-fetch -c panui -d -l Pānui > /var/log/airtime/cron.daily.log
 */10 19-23,0-6 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-tohu -d -l 'Ngā Tohu'> /var/log/airtime/cron.daily.log
 */15,26-29 18-21,0-3 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News > /var/log/airtime/cron.ampm.log
