@@ -197,7 +197,7 @@ def get_item_from_collection(
             
 
 def main():
-
+    prepare_folders()
     if args.get_n_items:
         NUM_GET = args.get_n_items
     else:
@@ -233,8 +233,7 @@ def main():
 
     sys.exit(0)
 
-
-if __name__ == "__main__":    
+def prepare_folders():
     # setup_folders
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
@@ -250,6 +249,8 @@ if __name__ == "__main__":
         p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()
+        p.communicate()    
 
+
+if __name__ == "__main__":    
     main()
