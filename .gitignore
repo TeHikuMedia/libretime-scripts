@@ -1,5 +1,6 @@
 .DS_Store
 test/
 *.log
-.*build*
-.*dist*
+build*
+dist*
+*.egg*

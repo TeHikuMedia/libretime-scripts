@@ -30,6 +30,8 @@ setup(
     install_requires=[
         "mutagen",
         "pytaglib",
+        "Pillow",
+        "pilkit"
     ],
     entry_points={
         "console_scripts": [

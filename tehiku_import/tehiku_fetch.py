@@ -11,9 +11,12 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import sys
+from io import BytesIO
+from PIL import Image
+from pilkit.processors import SmartResize
 
 from tehiku_import.import_functions import scale_media
-from tehiku_import.settings import BASE_MEDIA_DIR
+from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
@@ -28,7 +31,6 @@ args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
 STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
-MD5_CMD = 'md5sum'
 
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
@@ -194,12 +196,19 @@ def get_item_from_collection(
                 content_type = h.headers.get('content-type')
                 r = requests.get(image_url)
                 data = r.content
+                image = Image.open(BytesIO(data))
+                processor = SmartResize(300, 300)
+                new_img = processor.process(image)
+                background = Image.new("RGB", new_img.size, (255, 255, 255))
+                background.paste(new_img, mask=new_img.split()[3]) # 3 is the alpha channel
+                temp = BytesIO()
+                background.save(temp, format="JPEG")
                 fd.tags.add(
                     APIC(
                         encoding=3,
                         mime=content_type,
                         type=3, desc=u'Album',
-                        data=data
+                        data=temp.getvalue()
                     ))
                 fd.save()
             except Exception as e:
