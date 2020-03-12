@@ -182,7 +182,6 @@ def get_item_from_collection(
                 fd.tags['Artist'] = "Te Hiku Media"
                 if label:
                     fd.tags['Organization'] = label
-                    fd.tags['Label'] = label
                 fd.tags['Genre'] = "Whare Kōrero"
 
                 retval = fd.save()
