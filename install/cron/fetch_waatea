@@ -1,0 +1,1 @@
+*/15,56-59 16-23,0-4 * * 1-5	root	/usr/local/bin/waatea-fetch > /var/log/airtime/cron.waatea.log

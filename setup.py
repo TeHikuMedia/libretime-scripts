@@ -9,7 +9,12 @@ os.chdir(script_path)
 data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
     #('/etc/cron.d',           ['install/cron/update_metadata']),
-    ('/etc/cron.d',           ['install/cron/tehiku_import']),
+    ('/etc/cron.d',           [
+        'install/cron/fetch_interviews',
+        'install/cron/fetch_waatea',
+        'install/cron/fetch_panui',
+        'install/cron/fetch_weather',
+        'install/cron/fetch_ngatake']),
 ]
 
 LOG_DIR  = '/var/log/librescripts'
@@ -44,8 +49,8 @@ setup(
 for file in data_files:
     path = file[0]
     if 'cron.d' in path:
-        file_name = file[1][0].split('/')[-1]
-        file_path = os.path.join(path, file_name)
-        print('Modifying {0}'.format(file_path))
-
-        call(['chmod', '644', file_path])
+        for name in file[1]:
+            file_name = name.split('/')[-1]
+            file_path = os.path.join(path, file_name)
+            print('Modifying {0}'.format(file_path))
+            call(['chmod', '644', file_path])
