@@ -150,6 +150,7 @@ def get_waatea(time):
         fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
         fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
         fd.tags[u'ARTIST'] = u"Waatea"
+        fd.tags[u'LANGUAGE'] = u"Māori"
         fd.tags[u'LABEL'] = u"News-Auto-Imported, Updated-%s" % (datetime.now().strftime('%H:%M-%d-%m-%Y'))
         fd.tags[u'UFID'] = u"1840-WAATEA-NEWS-%02d%s-MP3"%(hour, ampm.upper())
         fd.tags[u'OWNER'] = u"Te Hiku Media"
