@@ -149,7 +149,7 @@ def get_item_from_collection(
                 print('Strange edge case')
                 continue
         else:
-            if now - publish_date < timedelta(days=expire):
+            if now - publish_date < timedelta(days=expire) and not delete:
                 DOWNLOAD = True
 
         if DOWNLOAD:
