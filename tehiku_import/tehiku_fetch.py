@@ -27,6 +27,8 @@ parser.add_argument("-r", "--remove-after-days", help="Remove file if it's older
 parser.add_argument("-n", "--get-n-items", help="Download n latests items")
 parser.add_argument("-l", "--label", help="Label to apply to the file.")
 parser.add_argument("-t", "--target-length", help="Duration in seconds that the file should be")
+parser.add_argument("-x", "--delete", help="Delete files that match.", action="store_true")
+
 args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
@@ -70,7 +72,7 @@ def get_root_dir():
 
 def get_item_from_collection(
         collection, num_items=20, expire=7, ampm=False, daily=False,
-        label='', duration=None):
+        label='', duration=None, delete=False):
     
     ROOT_DIR = get_root_dir()
 
@@ -119,7 +121,7 @@ def get_item_from_collection(
         # Check if file exists
         if os.path.isfile(file_path):
             # Check if we should delete it
-            if now - publish_date > timedelta(days=expire):
+            if now - publish_date > timedelta(days=expire) or delete:
                 # Remove old item
                 p = Popen(['rm',file_path], stdin=PIPE, stdout=PIPE)
                 output, error = p.communicate()
@@ -254,7 +256,8 @@ def main():
                 ampm=args.am_pm,
                 daily=args.daily,
                 duration=DURATION,
-                label=label)
+                label=label,
+                delete=args.delete)
     else:
         print("Must specify collection name.")
 
