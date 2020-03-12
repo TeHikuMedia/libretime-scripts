@@ -151,9 +151,9 @@ def get_item_from_collection(
             if duration:
                 scale_media(file_path, duration)
 
-            p = Popen(['chown', 'www-data', file_url], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chown', 'www-data', file_path], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chgrp', 'www-data', file_url], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chgrp', 'www-data', file_path], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
             # Check tags
