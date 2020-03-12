@@ -12,8 +12,8 @@ import argparse
 import os
 import sys
 
-from import_functions import scale_media
-from settings import BASE_MEDIA_DIR
+from tehiku_import.import_functions import scale_media
+from tehiku_import.settings import BASE_MEDIA_DIR
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
