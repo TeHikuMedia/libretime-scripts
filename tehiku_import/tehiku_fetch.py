@@ -27,7 +27,6 @@ parser.add_argument("-t", "--target-length", help="Duration in seconds that the 
 args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
-ROOT_DIR = ''
 STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
 MD5_CMD = 'md5sum'
 
@@ -46,6 +45,7 @@ def store_hash(md5):
     with open(STORE, 'w') as file:
         file.write(json.dumps(data))
 
+
 def hash_exists(md5):
     if os.path.exists(STORE):
         with open(STORE, 'r') as file:
@@ -55,9 +55,22 @@ def hash_exists(md5):
     return False
 
 
+def get_root_dir():
+    ROOT_DIR = os.path.join(BASE_MEDIA_DIR, 'whare_korero')
+    if not os.path.exists(ROOT_DIR):
+        os.mkdir(ROOT_DIR)
+        p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate() 
+    return ROOT_DIR
+
+
 def get_item_from_collection(
         collection, num_items=20, expire=7, ampm=False, daily=False,
         label='', duration=None):
+    
+    ROOT_DIR = get_root_dir()
 
     collection_url = 'https://tehiku.nz/api/?collection={0}'.format(collection)
 
@@ -240,16 +253,7 @@ def prepare_folders():
         p = Popen(['chown', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-
-    ROOT_DIR = os.path.join(BASE_MEDIA_DIR, 'whare_korero')
-
-    if not os.path.exists(ROOT_DIR):
-        os.mkdir(ROOT_DIR)
-        p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()    
+        p.communicate()   
 
 
 if __name__ == "__main__":    
