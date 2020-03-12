@@ -10,11 +10,7 @@ data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
     #('/etc/cron.d',           ['install/cron/update_metadata']),
     ('/etc/cron.d',           [
-        'install/cron/fetch_interviews',
-        'install/cron/fetch_waatea',
-        'install/cron/fetch_panui',
-        'install/cron/fetch_weather',
-        'install/cron/fetch_ngatake']),
+        'install/cron/tehiku_import',]),
 ]
 
 LOG_DIR  = '/var/log/librescripts'
