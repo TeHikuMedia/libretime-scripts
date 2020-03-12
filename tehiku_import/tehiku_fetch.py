@@ -232,6 +232,11 @@ def main():
     else:
         DURATION = None
 
+    if args.label:
+        label = args.label
+    else:
+        label = ''
+
     if args.collection:
         slugs = args.collection.split(',')
         for slug in slugs:
@@ -240,7 +245,8 @@ def main():
                 expire=EXPIRE,
                 ampm=args.am_pm,
                 daily=args.daily,
-                duration=DURATION)
+                duration=DURATION,
+                label=label)
     else:
         print("Must specify collection name.")
 
