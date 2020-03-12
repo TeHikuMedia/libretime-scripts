@@ -211,12 +211,12 @@ def get_item_from_collection(
 def main():
     prepare_folders()
     if args.get_n_items:
-        NUM_GET = args.get_n_items
+        NUM_GET = int(args.get_n_items)
     else:
         NUM_GET = 20
 
     if args.remove_after_days:
-        EXPIRE = args.remove_after_days
+        EXPIRE = int(args.remove_after_days)
     else:
         EXPIRE = 7
 
