@@ -24,7 +24,46 @@ timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
 parser.add_argument("-t", "--hour", help="Hour to download")
+parser.add_argument("-x", "--delete", help="Delete all the downloaded files befor continuing.", action="store_true")
 args = parser.parse_args()
+
+
+def prepare_folders(path=None):
+    if not os.path.exists(BASE_MEDIA_DIR):
+        os.mkdir(BASE_MEDIA_DIR)
+        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+
+    BASE_DIR = os.path.join(BASE_MEDIA_DIR, 'waatea_news')        
+    if not os.path.exists(BASE_DIR):
+        os.mkdir(BASE_DIR)
+        p = Popen(['chown', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+
+    if path:
+        if not os.path.exists(path):
+            os.mkdir(path)
+            p = Popen(['chown', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chgrp', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+
+    return BASE_DIR
+
+
+def delete_waatea():
+    base = prepare_folders()
+    for root, folder, files in os.walk(base):
+        for file in files:
+            fp = os.path.join(root, file)
+            print("Removing {0}".format(fp))
+            p = Popen(['rm', fp], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+
 
 def get_waatea_all():
     for hour_increment in range(6,19):
@@ -52,14 +91,6 @@ def get_waatea(time):
     hour = int( time.strftime('%I') ) # always want to get an hour ahead!
     ampm = time.strftime('%p').split('M')[0].lower()
 
-    if not os.path.exists(BASE_MEDIA_DIR):
-        os.mkdir(BASE_MEDIA_DIR)
-        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-
-
     start_time = datetime.now()
 
     ftp = FTP('ftp.irirangi.net') 
@@ -77,21 +108,11 @@ def get_waatea(time):
         return
 
     f_name = 'Waatea_News_%s%s.mp3'%(hour,ampm)
-    f_path = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
-    if not os.path.exists(f_path):
-        os.mkdir(f_path)
-        p = Popen(['chown', 'www-data', f_path], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', f_path], stdin=PIPE, stdout=PIPE)
-        p.communicate()
 
-    tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
-    if not os.path.exists(tmp_path):
-        os.mkdir(tmp_path)
-        p = Popen(['chown', 'www-data', tmp_path], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', tmp_path], stdin=PIPE, stdout=PIPE)
-        p.communicate()
+    f_path = prepare_folders()
+    tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')    
+    prepare_folders(tmp_path)
+
 
     tmp_file = os.path.join(tmp_path, f_name)
     final_file = os.path.join(f_path, f_name)
@@ -183,12 +204,16 @@ def get_waatea(time):
 
 
 def main():
+    if args.delete:
+        delete_waatea()
+
     if args.all:
         get_waatea_all()
     if args.hour:
         get_waatea_hour(int(args.hour))
     else:
         get_waatea_now()
+
     sys.exit(0)
 
 
