@@ -138,17 +138,12 @@ def get_waatea(time):
         file_record_date = mdate.astimezone(timezone)
 
         print("Old recorded", file_record_date)
-        if int(record_date.strftime('%Y%m%d%H%M%S')) > int(file_record_date.strftime('%Y%m%d%H%M%S')):
+        if record_date > file_record_date:
             print("File needs updating...")
             get_new_file = True
         else:
-            if hour==7 and ampm=='a':
-                if int(record_date.strftime('%Y%m%d')) < int(time.strftime('%Y%m%d')):
-                    print("File needs updating...")
-                get_new_file = True
-            else:
-                print("File up to date.")
-                get_new_file = False
+            print("File up to date.")
+            get_new_file = False
     else:
         print("File doesn't exist...")
         get_new_file = True
