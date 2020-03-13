@@ -190,8 +190,9 @@ def get_waatea(time):
         add_artwork(image_url, final_file)
 
     else:
-        p = Popen(['rm', tmp_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
+        if os.path.exists(tmp_file):
+            p = Popen(['rm', tmp_file], stdin=PIPE, stdout=PIPE)
+            p.communicate()
 
 
 def main():
