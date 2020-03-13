@@ -39,6 +39,7 @@ logging.basicConfig(
     filename=LOGFILE,
 )
 
+timezone = pytz.timezone("Pacific/Auckland")
 
 def change_user(user='postgres'):
     UID = getpwnam("postgres").pw_uid
