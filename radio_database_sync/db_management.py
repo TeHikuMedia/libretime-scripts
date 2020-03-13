@@ -41,6 +41,10 @@ logging.basicConfig(
 
 timezone = pytz.timezone("Pacific/Auckland")
 
+def prepare_dir(path):
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 def change_user(user='postgres'):
     UID = getpwnam("postgres").pw_uid
     GID = getgrnam("postgres").gr_gid
@@ -52,6 +56,7 @@ def backup():
     change_user('postgres')
     time = datetime.now()
     time = time.astimezone(timezone)
+    prepare_dir(TMP_DIR)
     tmp_file = os.path.join(TMP_DIR, 'libretime-backup-{0}.gz'.format(time.strftime('%a').upper()))
     p1 = Popen(['pg_dumpall'], stdout=PIPE)
     p2 = Popen(['gzip', '-c'], stdin=p1.stdout, stdout=PIPE)
