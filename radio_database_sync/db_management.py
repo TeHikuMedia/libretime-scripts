@@ -76,6 +76,14 @@ def backup():
     ])
     print(output)
 
+    # Also save name as "latest" for restoring purposes
+    output = check_output([
+        's3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, 'libretime-backup-latest.gz'),
+        '--region', 'ap-southeast-2',
+        '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
+    ])
+    print(output)
+
 
 def main():
     if args.backup:
