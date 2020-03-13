@@ -173,20 +173,18 @@ def get_item_from_collection(
 
             # Check tags
             fd = mutagen.File(file_path, easy=True)
-            if 'title' not in fd.tags.keys():
-                fd.tags['DATE'] = publish_date.strftime('%Y')
-                fd.tags['Title'] =  publication['headline']
-                try:
-                    fd.tags['Language'] =  publication['media'][0]['primary_language']
-                except:
-                    pass
-                fd.tags['Album'] = collection['name']
-                fd.tags['Artist'] = "Te Hiku Media"
-                if label:
-                    fd.tags['Organization'] = label
-                fd.tags['Genre'] = "Whare Kōrero"
-
-                retval = fd.save()
+            fd.tags['DATE'] = publish_date.strftime('%Y')
+            fd.tags['Title'] =  publication['headline']
+            try:
+                fd.tags['Language'] =  publication['media'][0]['primary_language']
+            except:
+                pass
+            fd.tags['Album'] = collection['name']
+            fd.tags['Artist'] = "Te Hiku Media"
+            if label:
+                fd.tags['Organization'] = label
+            fd.tags['Genre'] = "Whare Kōrero"
+            fd.save()
 
             # Try to embed picture
             add_artwork(publication['image_thumb_small'], file_path)
