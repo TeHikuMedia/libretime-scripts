@@ -67,7 +67,7 @@ def backup():
     p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
     output, error = p3.communicate()
-    output = check_output(['s3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, filename)])
+    output = check_output(['s3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, file_name)])
     print(output)
 
 
