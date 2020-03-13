@@ -9,6 +9,6 @@
 	"aws": {
 		"s3_bucket": "s3://tehiku-airtime-bucket/",
 		"access_key": "123",
-		"secret_key": "456",
+		"secret_key": "456"
 	}
 }

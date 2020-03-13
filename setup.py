@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+from setuptools.config import read_configuration
+
 import os
 from subprocess import call
 
@@ -21,6 +23,8 @@ if not os.path.exists(LOG_DIR):
 if not os.path.exists(LOG_FILE):
     open(LOG_FILE, 'a').close()
 
+conf_dict = read_configuration("setup.cfg")
+
 setup(
     name="libretime_scripts",
     version="0.2",
@@ -42,7 +46,7 @@ setup(
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
         ]
     },
-    data_files=data_files
+    data_files=conf_dict['options']['data_files']
 )
 
 # Update permissions for cron
