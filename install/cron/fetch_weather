@@ -1,1 +1,0 @@
-*/10 19-23,0-4 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-tohu -d -l 'Ngā Tohu'> /var/log/airtime/cron.daily.log

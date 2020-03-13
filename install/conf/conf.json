@@ -1,5 +1,9 @@
 {
 	"search_folders":[
 		"/home/ubuntu/sync/TeHikuDB/"
-	]
+	],
+	"project_name": "Te Hiku FM",
+	"project_slug": "te-hiku-fm",
+	"log_path": "/var/log/librescripts",
+	"tmp_dir": "/tmp/librescripts"
 }

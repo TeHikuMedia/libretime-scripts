@@ -1,1 +1,0 @@
-*/10 19-23,0-4 * * 1-5	root	/usr/local/bin/tehiku-fetch -c panui -d -l Pānui > /var/log/airtime/cron.daily.log

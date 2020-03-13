@@ -1,1 +1,0 @@
-*/15,26-29 17-23,0-5 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News > /var/log/airtime/cron.ampm.log
