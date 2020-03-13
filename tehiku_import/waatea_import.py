@@ -134,14 +134,9 @@ def get_waatea(time):
     get_new_file = False
     # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
     if path.isfile(final_file):
-        fd = taglib.File(final_file)
-        print(fd.tags)
-        try:
-            file_record_date = datetime.strptime(fd.tags[u'DATE'][0], '%Y-%m-%d %H:%M:%S')
-        except (ValueError, KeyError) as e:
-            mdate = datetime.fromtimestamp(os.path.getmtime(final_file))
-            file_record_date = mdate.astimezone(timezone)
-                        
+        mdate = datetime.fromtimestamp(os.path.getmtime(final_file))
+        file_record_date = mdate.astimezone(timezone)
+
         print("Old recorded", file_record_date)
         if int(record_date.strftime('%Y%m%d%H%M%S')) > int(file_record_date.strftime('%Y%m%d%H%M%S')):
             print("File needs updating...")
