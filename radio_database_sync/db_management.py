@@ -24,7 +24,7 @@ try:
     d = json.loads(f.read())
     f.close()
     ROOT_FOLDERS = d['search_folders']
-    LOGFILE = d['log_path']
+    LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
     TMP_DIR = d['tmp_dir']
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
