@@ -26,7 +26,9 @@ try:
     ROOT_FOLDERS = d['search_folders']
     LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
     TMP_DIR = d['tmp_dir']
-    S3_BUCKET = d['s3_bucket']
+    S3_BUCKET = d['aws']['s3_bucket']
+    AWS_ACCESS_KEY = d['aws']['access_key']
+    AWS_SECRET_KEY = d['aws']['secret_key']
     SLUG = d['project_slug']
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
@@ -67,7 +69,11 @@ def backup():
     p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
     output, error = p3.communicate()
-    output = check_output(['s3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, file_name)])
+    output = check_output([
+        's3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, file_name),
+        '--region', 'ap-southeast-2',
+        '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
+    ])
     print(output)
 
 
