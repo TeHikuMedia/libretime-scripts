@@ -15,6 +15,7 @@ from radio_database_sync.settings import CONF_FILE
 parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--backup", help="Collection slug name, separated by comma.", action="store_true")
 parser.add_argument("-X", "--DELETE", help="Delete the current db.", action="store_true")
+parser.add_argument("-r", "--restore", help="Restore the latest backup.", action="store_true")
 args = parser.parse_args()
 
 
@@ -83,22 +84,54 @@ def backup():
         '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
     ])
     print(output)
+    if not error:
+        return True
+    else:
+        return False
+
+
+def restore():
+    change_user('postgres')
+    time = datetime.now()
+    time = time.astimezone(timezone)
+    prepare_dir(TMP_DIR)
+    file_name = 'libretime-backup-latest.gz'
+    tmp_file = os.path.join(TMP_DIR, file_name)
+
+    output = check_output([
+        's3cmd', 'sync',
+        os.path.join(S3_BUCKET, SLUG, 'libretime-backup-latest.gz'),
+        tmp_file,
+        '--region', 'ap-southeast-2',
+        '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
+    ])
+
+
+    p1 = Popen(['gunzip', tmp_file], stdout=PIPE)
+    p1.communicate()
+    tmp_file = tmp_file.replace('.gz', '')
+    output = check_output(['psql', tmp_file], stdout=PIPE)
+    print(output)
+
+
+def delete():
+    # Always backup before we dump!
+    if backup():
+        change_user('postgres')
+        output = check_output(['dropdb', 'airtime'], stdout=PIPE)
+        print(output)
+    else:
+        print("Not deleting because we couldn't back up.")
 
 
 def main():
     if args.backup:
         backup()
+    elif args.restore:
+        restore()
     elif args.DELETE:
         delete()
-
     sys.exit(0)
-
-'''
-FILENAME="$(date +%a)"
-sudo -u postgres pg_dumpall | gzip -c > libretime-backup-$FILENAME.gz
-s3cmd sync libretime-backup-$FILENAME.gz s3://tehiku-airtime-bucket/tehiku_fm/tehiku_db_backup_$FILENAME.gz
-'''
-
 
 
 if __name__ == "__main__":
