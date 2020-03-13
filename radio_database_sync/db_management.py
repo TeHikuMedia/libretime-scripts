@@ -61,7 +61,7 @@ def backup():
     p1 = Popen(['pg_dumpall'], stdout=PIPE)
     p2 = Popen(['gzip', '-c'], stdin=p1.stdout, stdout=PIPE)
     p1.stdout.close()
-    p3 = Popen(['tee', tmp_file], stdin=p2.stdout)
+    p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
     output, error = p3.communicate()
     print(output)
