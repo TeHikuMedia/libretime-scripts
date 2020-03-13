@@ -41,8 +41,8 @@ logging.basicConfig(
 
 
 def change_user(user='postgres'):
-    UID = pwd.getpwnam("postgres").pw_uid
-    GID = grp.getgrnam("postgres").gr_gid
+    UID = getpwnam("postgres").pw_uid
+    GID = getgrnam("postgres").gr_gid
     os.setgid(GID)
     os.setuid(UID)
 
