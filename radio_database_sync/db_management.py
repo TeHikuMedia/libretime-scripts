@@ -65,7 +65,7 @@ def backup():
     file_name = 'libretime-backup-{0}.gz'.format(time.strftime('%a').upper())
     tmp_file = os.path.join(TMP_DIR, file_name)
     p1 = Popen(['pg_dumpall'], stdout=PIPE)
-    p2 = Popen(['gzip', '-c'], stdin=p1.stdout, stdout=PIPE)
+    p2 = Popen(['gzip', '-cf'], stdin=p1.stdout, stdout=PIPE)
     p1.stdout.close()
     p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
