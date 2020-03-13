@@ -179,14 +179,13 @@ def get_waatea(time):
         print(final_file)
         print(tmp_file)
         fd = taglib.File(final_file)
-        fd.tags[u'DATE'] = record_date.strftime('%Y')
-        # fd.tags[u'TIME'] = record_date.strftime('%Y-%m-%d %H:%M:%S')
-        # fd.tags[u'YEAR'] = datetime.now().strftime('%Y')
-        fd.tags[u'TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
-        fd.tags[u'ARTIST'] = u"Waatea"
-        fd.tags[u'LANGUAGE'] = u"Māori"
-        fd.tags[u'OWNER'] = u"Te Hiku Media"
-        fd.tags[u'ORGANIZATION'] = u"News"
+        fd.tags[u'DATE'] = record_date.strftime('%Y')        
+        fd.tags['TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
+        fd.tags['ARTIST'] = "Waatea"
+        fd.tags['Langauge'] = "Māori"
+        fd.tags['Owner'] = "Te Hiku Media"
+        fd.tags['Organization'] = "News"
+        fd.tags['Genre'] = "News & Information"
         # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
         fd.save()
         print(fd.tags)
