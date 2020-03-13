@@ -50,7 +50,7 @@ setup(
 )
 
 # Update permissions for cron
-for file in data_files:
+for file in conf_dict['options']['data_files']:
     path = file[0]
     if 'cron.d' in path:
         for name in file[1]:
