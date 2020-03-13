@@ -5,5 +5,6 @@
 	"project_name": "Te Hiku FM",
 	"project_slug": "te-hiku-fm",
 	"log_path": "/var/log/librescripts",
-	"tmp_dir": "/tmp/librescripts"
+	"tmp_dir": "/tmp/librescripts",
+	"s3_bucket": "s3://tehiku-airtime-bucket/"
 }

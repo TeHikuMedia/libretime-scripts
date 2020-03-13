@@ -32,7 +32,8 @@ setup(
         "pytaglib",
         "Pillow",
         "pilkit",
-        'colorthief'
+        'colorthief',
+        's3cmd'
     ],
     entry_points={
         "console_scripts": [

@@ -26,6 +26,8 @@ try:
     ROOT_FOLDERS = d['search_folders']
     LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
     TMP_DIR = d['tmp_dir']
+    S3_BUCKET = d['s3_bucket']
+    SLUG = d['project_slug']
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
@@ -57,13 +59,15 @@ def backup():
     time = datetime.now()
     time = time.astimezone(timezone)
     prepare_dir(TMP_DIR)
-    tmp_file = os.path.join(TMP_DIR, 'libretime-backup-{0}.gz'.format(time.strftime('%a').upper()))
+    file_name = 'libretime-backup-{0}.gz'.format(time.strftime('%a').upper())
+    tmp_file = os.path.join(TMP_DIR, file_name)
     p1 = Popen(['pg_dumpall'], stdout=PIPE)
     p2 = Popen(['gzip', '-c'], stdin=p1.stdout, stdout=PIPE)
     p1.stdout.close()
     p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
     output, error = p3.communicate()
+    output = check_output(['s3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, filename)])
     print(output)
 
 
