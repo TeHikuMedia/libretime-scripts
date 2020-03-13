@@ -107,7 +107,7 @@ def restore():
     ])
 
 
-    p1 = Popen(['gunzip', tmp_file], stdout=PIPE)
+    p1 = Popen(['gunzip', '-f', tmp_file], stdout=PIPE)
     p1.communicate()
     tmp_file = tmp_file.replace('.gz', '')
     p2 = Popen(['psql', '-f', tmp_file], stdout=PIPE)
