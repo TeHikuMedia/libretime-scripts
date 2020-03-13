@@ -52,9 +52,6 @@ def scan_folder(ROOT_FOLDER):
             if '.' is name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
-            elif '#' in root:
-                logging.debug('Skipping {0}'.format(name))
-                continue
             elif name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg':
                 logging.debug('Skipping {0}'.format(name))
                 continue
@@ -78,14 +75,15 @@ def scan_folder(ROOT_FOLDER):
             try:
                 label = parts[0]
             except IndexError as e:
-                logging.info('File not properly organized: {0}'.format(name))
+                logging.warning('File not properly organized: {0}'.format(name))
                 continue
 
             try:
                 language = parts[1]
             except IndexError as e:
                 language = None
-                logging.info('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.warning('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
+                continue
 
             try:
                 genre = parts[2]
@@ -93,6 +91,10 @@ def scan_folder(ROOT_FOLDER):
                 genre = None
                 logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
 
+            if '#' in root:
+                m = re.findall(r'\/(#[^\/]*)\/', root)
+                exclude = m[-1]
+                label = label + ' :: ' + exclude
 
             try:
                 audio = mutagen.File(os.path.join(root, name), easy=True)
