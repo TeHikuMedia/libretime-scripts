@@ -110,7 +110,7 @@ def restore():
     p1 = Popen(['gunzip', tmp_file], stdout=PIPE)
     p1.communicate()
     tmp_file = tmp_file.replace('.gz', '')
-    output = check_output(['psql', tmp_file], stdout=PIPE)
+    output = check_output(['psql', tmp_file])
     print(output)
 
 
@@ -118,7 +118,7 @@ def delete():
     # Always backup before we dump!
     if backup():
         change_user('postgres')
-        output = check_output(['dropdb', 'airtime'], stdout=PIPE)
+        output = check_output(['dropdb', 'airtime'])
         print(output)
     else:
         print("Not deleting because we couldn't back up.")
