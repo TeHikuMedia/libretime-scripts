@@ -43,6 +43,7 @@ setup(
             "radio-db-metadata-sync = radio_database_sync.update_metadata:main",
             "waatea-fetch = tehiku_import.waatea_import:main",
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
+            "radio-db-actions = radio_database_sync.db_management:main",
         ]
     },
     data_files=conf_dict['options']['data_files']
