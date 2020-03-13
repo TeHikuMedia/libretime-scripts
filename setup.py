@@ -31,7 +31,8 @@ setup(
         "mutagen",
         "pytaglib",
         "Pillow",
-        "pilkit"
+        "pilkit",
+        'colorthief'
     ],
     entry_points={
         "console_scripts": [
