@@ -19,6 +19,7 @@ import os
 
 from tehiku_import.settings import BASE_MEDIA_DIR
 from tehiku_import.import_functions import time_string, convert_media, scale_media
+from tehiku_import.add_artwork import add_artwork
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
@@ -120,10 +121,6 @@ def get_waatea(time):
     target_length = 60*6.0
     print("Fetching %s"%(f_name))
 
-    # Remove the file?
-    # commands.getstatusoutput('rm %s/%s'%(f_path, f_name))
-
-    ftp.retrbinary('RETR %s.MP3'%(f_id), open(tmp_file, 'wb').write)
     xml=[]
     ftp.retrlines( 'RETR %s.xml'%(f_id), lambda x: xml.append(x) )
     r_date = ''
@@ -163,7 +160,7 @@ def get_waatea(time):
 
     if get_new_file:
         print("Downloading new file...")
-        # check if we need to update the file
+        ftp.retrbinary('RETR %s.MP3'%(f_id), open(tmp_file, 'wb').write)
 
         try:
             media_length = scale_media(tmp_file, target_length)
@@ -197,6 +194,10 @@ def get_waatea(time):
         td =  (datetime.now() - start_time)
         print('elapsed time = %s' % ( td.seconds ))
 
+
+        # Try to add album art.
+        image_url = 'https://www.waateanews.com/site/uma/images/COLOR-Waatea%20logo%202016-final.jpg'
+        add_artwork(image_url, final_file)
 
     else:
         p = Popen(['rm', tmp_file], stdin=PIPE, stdout=PIPE)

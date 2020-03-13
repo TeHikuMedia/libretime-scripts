@@ -1,1 +1,1 @@
-from . import import_functions, settings
+from . import import_functions, settings, add_artwork
