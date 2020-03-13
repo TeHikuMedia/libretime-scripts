@@ -33,7 +33,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         "mutagen",
-        "pytaglib",
         "Pillow",
         "pilkit",
         'colorthief',
