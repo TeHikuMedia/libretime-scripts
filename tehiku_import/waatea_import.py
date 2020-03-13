@@ -1,6 +1,6 @@
 # from __future__ import absolute_import
 
-import taglib
+import mutagen
 import argparse
 
 from datetime import datetime, timedelta
@@ -176,23 +176,19 @@ def get_waatea(time):
         p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
         p.communicate()
 
-        print(final_file)
-        print(tmp_file)
-        fd = taglib.File(final_file)
-        fd.tags[u'DATE'] = record_date.strftime('%Y')        
+        fd = mutagen.File(final_file, easy=True)
+        fd.tags['DATE'] = record_date.strftime('%Y')        
         fd.tags['TITLE'] = "%02d%sM "%(hour,ampm.upper()) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
         fd.tags['ARTIST'] = "Waatea"
-        fd.tags['Langauge'] = "Māori"
-        fd.tags['Owner'] = "Te Hiku Media"
+        fd.tags['Album'] = "Waatea"
+        fd.tags['Language'] = "Māori"
         fd.tags['Organization'] = "News"
         fd.tags['Genre'] = "News & Information"
         # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
         fd.save()
-        print(fd.tags)
 
         td =  (datetime.now() - start_time)
         print('elapsed time = %s' % ( td.seconds ))
-
 
         # Try to add album art.
         image_url = 'https://www.waateanews.com/site/uma/images/COLOR-Waatea%20logo%202016-final.jpg'
