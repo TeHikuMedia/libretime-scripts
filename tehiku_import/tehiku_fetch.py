@@ -11,12 +11,10 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import sys
-from io import BytesIO
-from PIL import Image
-from pilkit.processors import SmartResize
 
 from tehiku_import.import_functions import scale_media
 from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD
+from tehiku_import.add_artwork import add_artwork
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
@@ -191,32 +189,7 @@ def get_item_from_collection(
                 retval = fd.save()
 
             # Try to embed picture
-            try:
-                image_url = publication['image_thumb_small']
-                fd = mutagen.File(file_path)
-                h = requests.head(image_url)
-                content_type = h.headers.get('content-type')
-                r = requests.get(image_url)
-                data = r.content
-                image = Image.open(BytesIO(data))
-                processor = SmartResize(300, 300)
-                new_img = processor.process(image)
-                background = Image.new("RGB", new_img.size, (255, 255, 255))
-                background.paste(new_img, mask=new_img.split()[3]) # 3 is the alpha channel
-                temp = BytesIO()
-                background.save(temp, format="JPEG")
-                fd.tags.add(
-                    APIC(
-                        encoding=3,
-                        mime=content_type,
-                        type=3, desc=u'Album',
-                        data=temp.getvalue()
-                    ))
-                fd.save()
-            except Exception as e:
-                print(e)
-                print('Could not set album art')
-
+            add_artwork(publication['image_thumb_small'], file_path)
             
 
 def main():
