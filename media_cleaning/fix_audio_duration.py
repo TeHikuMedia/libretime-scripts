@@ -1,10 +1,10 @@
 from mutagen.easyid3 import EasyID3
 from subprocess import Popen, PIPE
 import os
-import glob
+import glob 
 import json
 
-BASE_SOURCE_DIRECTORY = r'Y:\\'
+BASE_SOURCE_DIRECTORY = 'Y:\\'
     
 TEST_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '*\\')
 print('Scanning' +TEST_DIR)
@@ -15,7 +15,7 @@ print(os.listdir(BASE_SOURCE_DIRECTORY))
 ##    print(item)
 
 
-SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, 'Unsorted')
+SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, 'Station ID\\English')
 os.chdir(SEARCH_DIR)
 for item in glob.glob(r'[*.mp3|MP3|wav|flacc|mp4|m4a]'):
     print(item)
@@ -27,7 +27,7 @@ audio_files.extend(glob.glob(r'*.mp4'))
 audio_files.extend(glob.glob(r'*.wav'))
 audio_files.extend(glob.glob(r'*.flac'))
 
-##count = 0
+count = 0
 
 for file in audio_files:
     print(file)
@@ -85,7 +85,7 @@ for file in audio_files:
     print('TAG LENGTH: ', tag_length)
     print('')
 
-##    count = count + 1
-##
-##    if count > 15:
-##        break
+   count = count + 1
+
+   if count > 5:
+       break
