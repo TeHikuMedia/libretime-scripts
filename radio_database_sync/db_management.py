@@ -91,9 +91,6 @@ def backup():
 
 
 def restore():
-    change_user('postgres')
-    time = datetime.now()
-    time = time.astimezone(timezone)
     prepare_dir(TMP_DIR)
     file_name = 'libretime-backup-latest.gz'
     tmp_file = os.path.join(TMP_DIR, file_name)
@@ -106,9 +103,10 @@ def restore():
         '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
     ])
 
-
     p1 = Popen(['gunzip', '-f', tmp_file], stdout=PIPE)
     p1.communicate()
+
+    change_user('postgres')
     tmp_file = tmp_file.replace('.gz', '')
     p2 = Popen(['psql', '-f', tmp_file], stdout=PIPE)
     output, error = p2.communicate()
