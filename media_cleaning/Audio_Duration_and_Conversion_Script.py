@@ -5,7 +5,7 @@ import os
 
 BASE_SOURCE_DIRECTORY = r'Y:\\'
 
-SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads')
+SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads\\English\\Cat A')
 os.chdir(SEARCH_DIR)
 
 audio_files = glob.glob(r'*.mp3')
@@ -20,8 +20,8 @@ audio_files.extend(glob.glob(r'*.flac'))
 for file in audio_files:
     print(file)
     
-    source = 'Y:\\#WORKING\\Ads'
-    output = 'Y:\\#WORKING\\Ads_checked'
+    source = 'Y:\\#WORKING\\Ads\\English\\Cat A'
+    output = 'Y:\\#WORKING\\Ads_checked\\English\\Cat A'
     source = os.path.join(source,file)
     output = os.path.join(output,file)
 
@@ -77,7 +77,7 @@ for file in audio_files:
 
     elif round(duration) != round(tag_length):
         print("Message:      Tag is different",duration)
-         run = [
+        run = [
             'ffmpeg', '-y', 
             '-i', source,
             '-codec:a',
