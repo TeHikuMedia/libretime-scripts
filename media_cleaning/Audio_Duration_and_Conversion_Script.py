@@ -1,11 +1,13 @@
-from subprocess import Popen
+from subprocess import Popen, PIPE
+from mutagen.easyid3 import EasyID3
 import glob
 import os
+import json
 
 
-BASE_SOURCE_DIRECTORY = r'Y:\\'
+BASE_SOURCE_DIRECTORY = 'Y:\\'
 
-SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads\\English\\Cat A')
+SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads\\English\\#Remake')
 os.chdir(SEARCH_DIR)
 
 audio_files = glob.glob(r'*.mp3')
@@ -20,8 +22,8 @@ audio_files.extend(glob.glob(r'*.flac'))
 for file in audio_files:
     print(file)
     
-    source = 'Y:\\#WORKING\\Ads\\English\\Cat A'
-    output = 'Y:\\#WORKING\\Ads_checked\\English\\Cat A'
+    source = r'Y:\#WORKING\Ads\English\#Remake'
+    output = r'Y:\#WORKING\Ads_checked\English\#Remake'
     source = os.path.join(source,file)
     output = os.path.join(output,file)
 
@@ -37,12 +39,12 @@ for file in audio_files:
          '-of', 'json']
      
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
-    output, error = p.communicate()
+    data, error = p.communicate()
 
-    print('Output:\t', output)
+    print('Data:\t', data)
     print('Error: \t', error)
 
-    data = json.loads(output)
+    data = json.loads(data)
 
 
     duration = float(data['format']['duration'])*1000
@@ -73,7 +75,7 @@ for file in audio_files:
             #'160k', 
             output]
 
-        #p = Popen(run)
+        p = Popen(run)
 
     elif round(duration) != round(tag_length):
         print("Message:      Tag is different",duration)
