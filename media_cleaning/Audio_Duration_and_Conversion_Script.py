@@ -3,7 +3,7 @@ from mutagen.easyid3 import EasyID3
 import glob
 import os
 import json
-
+from pathlib import Path
 
 BASE_SOURCE_DIRECTORY = 'Y:\\'
 
@@ -36,10 +36,10 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         BASE_OUT = root.replace(BASE_SOURCE_DIRECTORY, DESTINATION_DIR)
         output = os.path.join(BASE_OUT, file)
 
+        Path(BASE_OUT).mkdir(parents=True, exist_ok=True)
+
         print(source)
         print(output)
-
-        break
 
         cmd = [
              'ffprobe',
@@ -86,7 +86,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
                 #'160k', 
                 output]
 
-            p = Popen(run)
+            # p = Popen(run)
 
         elif round(duration) != round(tag_length):
             print("Message:      Tag is different",duration)
@@ -104,7 +104,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         else:
             print("Message: Tag length is correct.")
 
-   
+
 # *********************************************************
 #     run = [
 #             'ffmpeg', '-y', 
