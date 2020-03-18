@@ -8,8 +8,8 @@ import json
 BASE_SOURCE_DIRECTORY = 'Y:\\'
 
 # SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads\\English\\#Remake')
-SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\Music')
-DESTINATION_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\~WORKING')
+SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\Music\\')
+DESTINATION_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\~WORKING\\')
 os.chdir(SEARCH_DIR)
 
 audio_files = glob.glob(r'*.mp3')
@@ -104,7 +104,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         else:
             print("Message: Tag length is correct.")
 
-    break
+   
 # *********************************************************
 #     run = [
 #             'ffmpeg', '-y', 
