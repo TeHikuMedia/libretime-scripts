@@ -82,9 +82,9 @@ for root, dirs, files in os.walk(SEARCH_DIR):
             
         # print('Tag Length', tag_length)
 
-        if tag_length is None or round(duration) != round(tag_length):
+        if tag_length is None or round(duration/1000) != round(tag_length/1000):
             files_to_fix_count = files_to_fix_count + 1
-            print("Fixing {0} with TLEN {1} vs {2}".format(source, tag_length, duration))
+            print("Fixing {0} with TLEN {1}s vs {2}s".format(file, round(tag_length/1000), round(duration/1000)))
             run = [
                 'ffmpeg', '-y', 
                 '-i', source,
