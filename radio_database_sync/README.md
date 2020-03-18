@@ -9,15 +9,17 @@ The primary structure for our "radio database" is the following folder structure
   - Language
     - _Unsorted
     - Genre
-      - #Archive
-      - #Trash
+      - ~Archive
+      - ~TimeSensitive
+      - ~Trash
+
 
 For example, our Te Hiku Radio folder would look like this,
 
 - 📁 Music
   - 📁 Māori
     - 📁 Country
-      - 📁 #Archive
+      - 📁 ~Archive
       - 🎵 Te Arikinui.mp3
       - 🎵 Kia Ora.mp3
     - 📁 Pop
@@ -27,11 +29,11 @@ For example, our Te Hiku Radio folder would look like this,
 - 📁 Station ID
   - 📁 Māori
     - 📁 Celebreties
-      - 📁 #Archive
+      - 📁 ~Archive
       - 🎵 Riki Harawira ID.mp3
       - 🎵 Maisey Rika ID.mp3
     - 📁 Haukāinga
-        - 📁 #Archive
+        - 📁 ~Archive
           - 🎵 Keoni ID.mp3
         - 🎵 Aunty Leni ID.mp3
   - 📁 English
@@ -44,9 +46,4 @@ For example, the song `🎵 Kia Ora.mp3` will have the following tags updated by
 - [genre] = Country
 - [label] = Music
 
-Any file that has a parent directory with the `#` in the name will have that added to their label. For example, `🎵 Keoni ID.mp3`:
-- [language] = Māori
-- [genre] = Haukāinga
-- [label] = Station ID, #Archived
-
-We will use this to exclude files with `label contains #` from our playout.
+Any file that has a parent directory with the `~` in the name will not be synced. Resilio sync by default has a rule to ignore folders/files that start with `~`. For example, `🎵 Keoni ID.mp3` will not be synced since it is in the `~Archive` folder.
