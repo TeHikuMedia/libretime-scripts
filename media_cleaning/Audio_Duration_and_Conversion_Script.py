@@ -1,5 +1,6 @@
 from subprocess import Popen, PIPE
 from mutagen.easyid3 import EasyID3
+import mutagen
 import glob
 import os
 import json
@@ -19,27 +20,30 @@ audio_files.extend(glob.glob(r'*.mp4'))
 audio_files.extend(glob.glob(r'*.wav'))
 audio_files.extend(glob.glob(r'*.flac'))
 
-# count = 0
-
+all_files_count = 0
+files_to_check_count = 0
+files_to_fix_count = 0
 for root, dirs, files in os.walk(SEARCH_DIR):
 
     for file in files:
+        all_files_count = all_files_count + 1
 
         if file[0] == '.':
             continue
         elif file.split('.')[-1].lower() not in 'mp3 m4a mp4 wav flac':
             continue
 
-        print(file)
-        
+        # print(file)
+        files_to_check_count = files_to_check_count + 1
+
         source = os.path.join(root, file)
         BASE_OUT = root.replace(BASE_SOURCE_DIRECTORY, DESTINATION_DIR)
         output = os.path.join(BASE_OUT, file)
 
         Path(BASE_OUT).mkdir(parents=True, exist_ok=True)
 
-        print(source)
-        print(output)
+        # print(source)
+        # print(output)
 
         cmd = [
              'ffprobe',
@@ -52,20 +56,20 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         p = Popen(cmd, stdout=PIPE, stderr=PIPE)
         data, error = p.communicate()
 
-        print('Data:\t', data)
-        print('Error: \t', error)
+        # print('Data:\t', data)
+        # print('Error: \t', error)
 
         data = json.loads(data)
 
 
         duration = float(data['format']['duration'])*1000
-        print('Duration:', duration,'ms')
+        # print('Duration:', duration,'ms')
 
         try:
-            audio = EasyID3(source)
+            audio = mutagen.File(source, easy=True)
             tag_length  = float(audio['length'][0])
         except IndexError:
-                print('ERROR:     Something is janky...')
+                print('ERROR: Something is janky...')
                 continue
         except KeyError:
             tag_length = None
@@ -73,10 +77,11 @@ for root, dirs, files in os.walk(SEARCH_DIR):
             print(error)
             continue
             
-        print('Tag Length', tag_length)
+        # print('Tag Length', tag_length)
 
-        if tag_length is None:
-            print("Message:      Tag is None, setting to", duration)
+        if tag_length is None or round(duration) != round(tag_length):
+            files_to_fix_count = files_to_fix_count + 1
+            print("Fixing {0} with TLEN {1} vs {2}".format(source, tag_length, duration))
             run = [
                 'ffmpeg', '-y', 
                 '-i', source,
@@ -88,21 +93,13 @@ for root, dirs, files in os.walk(SEARCH_DIR):
 
             # p = Popen(run)
 
-        elif round(duration) != round(tag_length):
-            print("Message:      Tag is different",duration)
-            run = [
-                'ffmpeg', '-y', 
-                '-i', source,
-                '-codec:a',
-                'copy', 
-                #'-b:a',
-                #'160k', 
-                output]
-
-            #p = Popen(run)
-
         else:
-            print("Message: Tag length is correct.")
+            continue
+            # print("Message: Tag length is correct.")
+
+print("Scanned: {0}".format(all_files_count))
+print("Checked: {0}".format(files_to_check_count))
+print("Fixed:   {0}".format(files_to_fix_count))
 
 
 # *********************************************************
