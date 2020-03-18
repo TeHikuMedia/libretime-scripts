@@ -9,7 +9,7 @@ BASE_SOURCE_DIRECTORY = 'Y:\\'
 
 # SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING\\Ads\\English\\#Remake')
 SEARCH_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\Music')
-DESTINATION_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\#WORKING')
+DESTINATION_DIR = os.path.join(BASE_SOURCE_DIRECTORY, '\\~WORKING')
 os.chdir(SEARCH_DIR)
 
 audio_files = glob.glob(r'*.mp3')
@@ -29,16 +29,16 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         
         source = os.path.join(root, file)
         BASE_OUT = root.replace(SEARCH_DIR, DESTINATION_DIR)
-        output = os.path.join(root, file)
+        output = os.path.join(BASE_OUT, file)
 
         print(source)
         print(output)
-        
+
         break
-        
+
         cmd = [
              'ffprobe',
-             '-i', file,
+             '-i', source,
              '-show_entries',
              'format=duration',
              '-v', 'quiet',
@@ -57,7 +57,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         print('Duration:', duration,'ms')
 
         try:
-            audio = EasyID3(file)
+            audio = EasyID3(source)
             tag_length  = float(audio['length'][0])
         except IndexError:
                 print('ERROR:     Something is janky...')
@@ -99,7 +99,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         else:
             print("Message: Tag length is correct.")
 
-
+    break
 # *********************************************************
 #     run = [
 #             'ffmpeg', '-y', 
