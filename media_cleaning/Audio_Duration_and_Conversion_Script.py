@@ -28,7 +28,7 @@ for root, dirs, files in os.walk(SEARCH_DIR):
         print(file)
         
         source = os.path.join(root, file)
-        BASE_OUT = root.replace(SEARCH_DIR, DESTINATION_DIR)
+        BASE_OUT = root.replace(BASE_SOURCE_DIRECTORY, DESTINATION_DIR)
         output = os.path.join(BASE_OUT, file)
 
         print(source)
