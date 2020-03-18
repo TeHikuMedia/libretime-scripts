@@ -25,6 +25,11 @@ for root, dirs, files in os.walk(SEARCH_DIR):
 
     for file in files:
 
+        if file[0] == '.':
+            continue
+        elif file.split('.')[-1].lower() not in 'mp3 m4a mp4 wav flac':
+            continue
+
         print(file)
         
         source = os.path.join(root, file)
