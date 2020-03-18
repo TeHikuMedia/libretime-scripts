@@ -27,7 +27,7 @@ audio_files.extend(glob.glob(r'*.mp4'))
 audio_files.extend(glob.glob(r'*.wav'))
 audio_files.extend(glob.glob(r'*.flac'))
 
-count = 0
+#count = 0
 
 for file in audio_files:
     print(file)
@@ -85,7 +85,7 @@ for file in audio_files:
     print('TAG LENGTH: ', tag_length)
     print('')
 
-   count = count + 1
+   #count = count + 1
 
-   if count > 5:
-       break
+   #if count > 5:
+    #   break
