@@ -72,7 +72,10 @@ for root, dirs, files in os.walk(SEARCH_DIR):
                 print('ERROR: Something is janky...')
                 continue
         except KeyError:
-            tag_length = None
+            try:
+                tag_length  = float(audio['TLEN'][0])
+            except KeyError:
+                tag_length = None
         except Exception as error:
             print(error)
             continue
