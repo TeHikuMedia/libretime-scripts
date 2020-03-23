@@ -245,8 +245,12 @@ def ingest_video(watch_id, queue):
 
     child = pexpect.spawn('/bin/bash')
     child.sendline(command)
-    child.expect(pexpect.EOF)
-    
+    print("Starting stream...")
+    result = child.expect(pexpect.EOF)
+    print("Exited")
+    q.put({'ingesting': False})
+
+
     # while True:
     #     # print("Running {0}".format(command))
     #     exit = thread.wait()
@@ -270,16 +274,7 @@ def run():
     m = Manager()
     q = m.Queue()
 
-    # results = []
     messages = {}
-
-
-    # for i in range(NUM_PROC):
-    #     command = COMMANDS[i]
-    #     station = STATIONS[i]
-    #     messages[station]={'init':True}
-    #     res = pool.apply_async(run_silence_detection, (station, command, q))
-    #     results.append(res)
 
     loop = True
     watching = False
@@ -292,22 +287,11 @@ def run():
                 if watch_id is not None:
                     break
 
-            
-
             if watch_id and not watching:
                 print("Ingesting {0}".format(watch_id))
                 watching = True
-                # Do some stuff
+
                 res = pool.apply_async(ingest_video, (watch_id, q))
-
-            # sum_r = 0
-            # for i in range(NUM_PROC):
-            #     r = results[i]
-            #     if r.ready():
-            #         sum_r = sum_r + 1
-
-            # if sum_r == 3:
-            #     raise Exception
 
             try:
                 message = q.get_nowait()
@@ -317,17 +301,16 @@ def run():
                 pass
 
             for key in messages.keys():
-                if 'end' in messages[key].keys():
-                    del messages[key]
-                elif 'sent' in messages[key].keys():
-                    continue
-                elif 'start' in messages[key].keys():
-                    delta = datetime.datetime.now() - messages[key]['start']
-                    if delta.total_seconds() > 60:
-                        # ALERT
-                        notify(
-                            key, messages[key]['start'], 0, priority='ALERT')
-                        messages[key]['sent'] = True
+                if 'ingesting' == key:
+                    if messages[key]:
+                        print("Ingesting")
+                    else:
+                        print("Ingestion stopped")
+                        watching = False                    
+                        # # ALERT
+                        # notify(
+                        #     key, messages[key]['start'], 0, priority='ALERT')
+                        # messages[key]['sent'] = True
 
             time.sleep(15)
             continue
