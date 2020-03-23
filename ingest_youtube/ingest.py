@@ -246,7 +246,7 @@ def ingest_video(watch_id, queue):
     child = pexpect.spawn('/bin/bash')
     child.sendline(command)
     print("Starting stream...")
-    result = child.expect('.*')
+    result = child.expect('Closing currently open stream')
     print("Exited")
     print(result)
     q.put({'ingesting': False})
