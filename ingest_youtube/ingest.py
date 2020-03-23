@@ -242,12 +242,13 @@ def ingest_video(watch_id, queue):
     # thread = pexpect.popen_spawn.PopenSpawn(command)
     # cpl = thread.compile_pattern_list(
     #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
-
+    print(command)
     child = pexpect.spawn('/bin/bash')
     child.sendline(command)
     print("Starting stream...")
-    result = child.expect(pexpect.EOF)
+    result = child.expect('.*')
     print("Exited")
+    print(result)
     q.put({'ingesting': False})
 
 
