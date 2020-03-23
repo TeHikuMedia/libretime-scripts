@@ -47,7 +47,7 @@ GOOGLE_API = \
 
 
 CHANNELS = (
-    ('World Surf Leageu', 'UChuLeaTGRcfzo0UjL-2qSbQ'),
+    # ('World Surf Leageu', 'UChuLeaTGRcfzo0UjL-2qSbQ'),
     ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ')
 )
 
