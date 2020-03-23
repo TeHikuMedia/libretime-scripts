@@ -243,9 +243,15 @@ def ingest_video(watch_id, queue):
     # cpl = thread.compile_pattern_list(
     #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
     while True:
-        print("Running {0}".format(command))
+        # print("Running {0}".format(command))
         exit = thread.wait()
-        print(exit)
+        if exit == 0:
+            print("Good finsh")
+        elif exit == 1:
+            print("Error")
+            break
+        else:
+            print(exit)
 
 
 def run():
