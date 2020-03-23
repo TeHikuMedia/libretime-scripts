@@ -278,6 +278,7 @@ def run():
                     break
                 else:
                     continue
+            print("Ingesting {0}".foramt(watch_id))
 
             if watch_id and not watching:
                 watching = True
