@@ -51,7 +51,7 @@ CHANNELS = (
     ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ')
 )
 
-with open("vault.yaml", 'r') as file:
+with open("vault.yml", 'r') as file:
     CREDENTIALS = yaml.safe_load(file)
 
 def get_watch_id(channel_id):

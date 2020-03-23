@@ -4,7 +4,7 @@ import requests
 import json
 import yaml
 
-with open("vault.yaml", 'r') as file:
+with open("vault.yml", 'r') as file:
     CREDENTIALS = yaml.safe_load(file)
 
 ACCESS_KEY = CREDENTIALS['ACCESS_KEY']
