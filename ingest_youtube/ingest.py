@@ -55,7 +55,7 @@ with open("vault.yaml", 'r') as file:
     CREDENTIALS = yaml.safe_load(file)
 
 def get_watch_id(channel_id):
-    url = GOOGLE_API.format(channel_id=channel_id)
+    url = GOOGLE_API.format(channel_id=channel_id, google_api_key=CREDENTIALS['google_api_key'])
     r = requests.get(url)
     result = r.json()
     try:

@@ -7,6 +7,9 @@ import yaml
 with open("vault.yaml", 'r') as file:
     CREDENTIALS = yaml.safe_load(file)
 
+ACCESS_KEY = CREDENTIALS['ACCESS_KEY']
+SECRET_KEY = CREDENTIALS['SECRET_KEY']
+
 class Emailer():
     SENDER = "Silence Detector <webapp@tehiku.nz>"
     RECIPIENT = "keoni@tehiku.co.nz"
@@ -63,7 +66,7 @@ class Emailer():
 
 class SlackPost():
 
-    URL = ''
+    URL = CREDENTIALS['slack_webhook']
     COMMAND = """curl -X POST -H 'Content-type: application/json' --data '{0}' {1}"""
 
     def __init__(self):
