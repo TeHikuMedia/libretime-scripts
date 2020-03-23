@@ -246,11 +246,19 @@ def ingest_video(watch_id, queue):
     child = pexpect.spawn('/bin/bash')
     child.sendline(command)
     print("Starting stream...")
+
+    s = SlackPost()
+    s.data = {"text": "Starting stream {0}".format(command)}
+    s.send()
+
     result = child.expect('Closing currently open stream')
     print("Exited")
     print(result)
     queue.put({'ingesting': False})
 
+    s = SlackPost()
+    s.data = {"text": "Stream stopped."}
+    s.send()
 
     # while True:
     #     # print("Running {0}".format(command))
@@ -312,9 +320,9 @@ def run():
                         watching = False
                         watch_id = None                 
                         # # ALERT
-                        # notify(
-                        #     key, messages[key]['start'], 0, priority='ALERT')
-                        # messages[key]['sent'] = True
+                        notify(
+                            key, messages[key]['start'], 0, priority='ALERT')
+                        messages[key]['sent'] = True
 
             time.sleep(15)
             continue
