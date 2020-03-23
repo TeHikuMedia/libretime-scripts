@@ -239,19 +239,24 @@ def run_silence_detection(station, command, q):
 
 def ingest_video(watch_id, queue):
     command = STREAM_CMD.format(watch_id=watch_id)
-    thread = pexpect.popen_spawn.PopenSpawn(command)
+    # thread = pexpect.popen_spawn.PopenSpawn(command)
     # cpl = thread.compile_pattern_list(
     #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
-    while True:
-        # print("Running {0}".format(command))
-        exit = thread.wait()
-        if exit == 0:
-            print("Good finsh")
-        elif exit == 1:
-            print("Error")
-            break
-        else:
-            print(exit)
+
+    child = pexpect.spawn('/bin/bash')
+    child.sendline(command)
+    child.expect(pexpect.EOF)
+    
+    # while True:
+    #     # print("Running {0}".format(command))
+    #     exit = thread.wait()
+    #     if exit == 0:
+    #         print("Good finsh")
+    #     elif exit == 1:
+    #         print("Error")
+    #         break
+    #     else:
+    #         print(exit)
 
 
 def run():
