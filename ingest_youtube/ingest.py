@@ -249,7 +249,7 @@ def ingest_video(watch_id, queue):
     result = child.expect('Closing currently open stream')
     print("Exited")
     print(result)
-    q.put({'ingesting': False})
+    queue.put({'ingesting': False})
 
 
     # while True:
