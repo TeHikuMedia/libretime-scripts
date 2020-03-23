@@ -2,9 +2,10 @@ import boto3
 from botocore.exceptions import ClientError
 import requests
 import json
-ACCESS_KEY = "AKIAJKSOLCGF6JTCJGRQ"
-SECRET_KEY = "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"
+import yaml
 
+with open("vault.yaml", 'r') as file:
+    CREDENTIALS = yaml.safe_load(file)
 
 class Emailer():
     SENDER = "Silence Detector <webapp@tehiku.nz>"
@@ -61,7 +62,8 @@ class Emailer():
 
 
 class SlackPost():
-    URL = 'https://hooks.slack.com/services/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'
+
+    URL = ''
     COMMAND = """curl -X POST -H 'Content-type: application/json' --data '{0}' {1}"""
 
     def __init__(self):

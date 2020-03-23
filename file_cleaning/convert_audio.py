@@ -12,8 +12,9 @@ from subprocess import Popen, PIPE, call
 BAD_FORMATS = 'wav mpg wave aiff m4a'
 
 CONF_FILE = "/etc/librescripts/conf.json"
-ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
-ROOT_FOLDER = "/Users/livestream/Desktop/DESKTOP 2/desktop/Te Hiku Radio Database"
+# ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
+ROOT_FOLDER = "/Volumes/Te Hiku Radio Database/"
+ROOT_FOLDER = "/Volumes/Sunshine_Radio_Database/"
 LOGFILE= "/var/log/librescripts/update_metadata.log"
 
 logging.basicConfig(
@@ -48,7 +49,7 @@ def scan_folder(ROOT_FOLDER):
             if '.' is name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
-            elif '#Trash' in root:
+            elif '~' in root:
                 continue
             elif extension not in 'mp3 mp4 m4a flac wav ogg mpg':
                 logging.debug('Skipping {0}'.format(name))
@@ -74,7 +75,7 @@ def scan_folder(ROOT_FOLDER):
                     logging.info("Converted {0} -> {1}".format(name.encode('utf-8'), out_file.encode('utf-8')))
                     CON_FILES = CON_FILES + 1
                     # Move old file to #Trash
-                    trash = os.path.join(ROOT_FOLDER, '#Trash', root)
+                    trash = os.path.join(ROOT_FOLDER, '~Trash', root)
                     if not os.path.exists(trash):
                         os.mkdir(trash)
                     call(['mv', FILE_PATH, os.path.join(trash, name)])

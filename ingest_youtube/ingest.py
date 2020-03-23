@@ -10,6 +10,7 @@ from send_email import Emailer, SlackPost
 import time
 import signal
 import requests
+import yaml
 
 filename = 'silence.log'
 command = '/usr/local/bin/ffmpeg -i "http://radio.tehiku.live:8040/stream;1" -af silencedetect=d=3 -f null -'
@@ -42,20 +43,25 @@ STREAM_CMD = \
 
 
 GOOGLE_API = \
-    "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&eventType=live&type=video&key=AIzaSyDtIOUCvGZGamL07Yd3BKZBnQ6iuGgWYm4"
+    "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&eventType=live&type=video&key={google_api_key}"
 
 
 CHANNELS = (
     ('World Surf Leageu', 'UChuLeaTGRcfzo0UjL-2qSbQ'),
-    #('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ')
+    ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ')
 )
 
+with open("vault.yaml", 'r') as file:
+    CREDENTIALS = yaml.safe_load(file)
 
 def get_watch_id(channel_id):
     url = GOOGLE_API.format(channel_id=channel_id)
     r = requests.get(url)
     result = r.json()
-    return result['items'][0]['id']['videoId']
+    try:
+        return result['items'][0]['id']['videoId']
+    except:
+        return None
 
 
 def notify(station, silence_start, silence_end, **kwargs):
@@ -231,10 +237,15 @@ def run_silence_detection(station, command, q):
 
     thread.close()
 
+def ingest_video(watch_id, queue):
+    command = STREAM_CMD.format(watch_id=watch_id)
+    thread = pexpect.popen_spawn.PopenSpawn(command)
+    cpl = thread.compile_pattern_list(
+        [pexpect.EOF, '\[silencedetect .*] (.*)'])
 
 def run():
 
-    NUM_PROC = len(STATIONS)
+    NUM_PROC = 1
     # killer = GracefulKiller()
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGINT, original_sigint_handler)
@@ -242,25 +253,39 @@ def run():
     pool = Pool(processes=NUM_PROC)
     m = Manager()
     q = m.Queue()
-    # print 'ALERT             \t{0}\t{1}\t{2}\t{3}'.format(
-    #         'START             ',
-    #         'END               ',
-    #         'DURATION   ',
-    #         'ITEM              ')
 
-    results = []
+    # results = []
     messages = {}
-    for i in range(NUM_PROC):
-        command = COMMANDS[i]
-        station = STATIONS[i]
-        messages[station]={'init':True}
-        res = pool.apply_async(run_silence_detection, (station, command, q))
-        results.append(res)
+
+
+    # for i in range(NUM_PROC):
+    #     command = COMMANDS[i]
+    #     station = STATIONS[i]
+    #     messages[station]={'init':True}
+    #     res = pool.apply_async(run_silence_detection, (station, command, q))
+    #     results.append(res)
 
     loop = True
+    watching = False
 
     while loop:
         try:
+
+
+            for channel in CHANNELS:
+                watch_id = get_watch_id(channel[1])
+                if watch_id:
+                    break
+                else:
+                    continue
+
+            if watch_id and not watching:
+                watching = True
+                # Do some stuff
+                res = pool.apply_async(ingest_video, (watch_id, q))
+
+
+
             sum_r = 0
             for i in range(NUM_PROC):
                 r = results[i]
@@ -290,7 +315,7 @@ def run():
                             key, messages[key]['start'], 0, priority='ALERT')
                         messages[key]['sent'] = True
 
-            time.sleep(.2)
+            time.sleep(15)
             continue
 
         except KeyboardInterrupt:
@@ -308,8 +333,7 @@ def run():
 
 
 def main():
-    for channel in CHANNELS:
-        print(get_watch_id(channel[1]))
+    run()
 
 
 if __name__ == "__main__":    

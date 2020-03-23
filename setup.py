@@ -36,7 +36,10 @@ setup(
         "Pillow",
         "pilkit",
         'colorthief',
-        's3cmd'
+        's3cmd',
+        'pexpect',
+        'boto3',
+        'pyyaml'
     ],
     entry_points={
         "console_scripts": [
