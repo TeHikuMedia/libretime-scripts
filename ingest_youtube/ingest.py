@@ -283,16 +283,14 @@ def run():
                 # Do some stuff
                 res = pool.apply_async(ingest_video, (watch_id, q))
 
+            # sum_r = 0
+            # for i in range(NUM_PROC):
+            #     r = results[i]
+            #     if r.ready():
+            #         sum_r = sum_r + 1
 
-
-            sum_r = 0
-            for i in range(NUM_PROC):
-                r = results[i]
-                if r.ready():
-                    sum_r = sum_r + 1
-
-            if sum_r == 3:
-                raise Exception
+            # if sum_r == 3:
+            #     raise Exception
 
             try:
                 message = q.get_nowait()
@@ -321,8 +319,9 @@ def run():
             print("Caught KeyboardInterrupt, terminating workers")
             pool.terminate()
             loop = False
-        except Exception:
+        except Exception as e:
             print("All detectors died")
+            print(e)
             pool.close()
             loop = False
         else:
@@ -332,9 +331,6 @@ def run():
 
 
 def main():
-    for channel in CHANNELS:
-        print(get_watch_id(channel[1]))
-
     run()
 
 
