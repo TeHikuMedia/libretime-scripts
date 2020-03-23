@@ -334,6 +334,9 @@ def run():
 
 
 def main():
+    for channel in CHANNELS:
+        print(get_watch_id(channel[1]))
+
     run()
 
 
