@@ -281,11 +281,12 @@ def run():
 
     while loop:
         try:
-            print("Checkign channels...")
-            for channel in CHANNELS:
-                watch_id = get_watch_id(channel[1])
-                if watch_id is not None:
-                    break
+            if not watching:
+                print("Checkign channels...")
+                for channel in CHANNELS:
+                    watch_id = get_watch_id(channel[1])
+                    if watch_id is not None:
+                        break
 
             if watch_id and not watching:
                 print("Ingesting {0}".format(watch_id))
@@ -306,7 +307,8 @@ def run():
                         print("Ingesting")
                     else:
                         print("Ingestion stopped")
-                        watching = False                    
+                        watching = False
+                        watch_id = None                 
                         # # ALERT
                         # notify(
                         #     key, messages[key]['start'], 0, priority='ALERT')
