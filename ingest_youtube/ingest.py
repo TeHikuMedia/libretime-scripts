@@ -301,6 +301,7 @@ def run():
             except:
                 pass
 
+            print(messages)
             for key in messages.keys():
                 if 'ingesting' == key:
                     if messages[key]:
