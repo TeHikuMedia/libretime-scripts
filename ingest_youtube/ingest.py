@@ -240,8 +240,12 @@ def run_silence_detection(station, command, q):
 def ingest_video(watch_id, queue):
     command = STREAM_CMD.format(watch_id=watch_id)
     thread = pexpect.popen_spawn.PopenSpawn(command)
-    cpl = thread.compile_pattern_list(
-        [pexpect.EOF, '\[silencedetect .*] (.*)'])
+    # cpl = thread.compile_pattern_list(
+    #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
+    while True:
+        exit = thread.wait()
+        print(exit)
+
 
 def run():
 
@@ -276,9 +280,10 @@ def run():
                 if watch_id is not None:
                     break
 
-            print("Ingesting {0}".format(watch_id))
+            
 
             if watch_id and not watching:
+                print("Ingesting {0}".format(watch_id))
                 watching = True
                 # Do some stuff
                 res = pool.apply_async(ingest_video, (watch_id, q))
