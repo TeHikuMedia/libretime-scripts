@@ -276,7 +276,7 @@ def run():
                 if watch_id is not None:
                     break
 
-            print("Ingesting {0}".foramt(watch_id))
+            print("Ingesting {0}".format(watch_id))
 
             if watch_id and not watching:
                 watching = True
