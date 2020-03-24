@@ -39,7 +39,7 @@ API_URL = 'http://airtime.tehiku.live/api/live-info'
 
 
 STREAM_CMD = \
-    'streamlink https://www.youtube.com/watch?v={watch_id} best --stdout | ffmpeg -y -re -i pipe: -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg icecast://TeHikuMedia:Ku4ka1840@libreice.tehiku.radio:8001/master'
+    'streamlink https://www.youtube.com/watch?v={watch_id} best --stdout | ffmpeg -y -re -i pipe: -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg icecast://{ice_creds}@icecast.tehiku.radio:8000/youtube_ingest.ogg'
 
 
 GOOGLE_API = \
@@ -238,7 +238,7 @@ def run_silence_detection(station, command, q):
     thread.close()
 
 def ingest_video(watch_id, queue):
-    command = STREAM_CMD.format(watch_id=watch_id)
+    command = STREAM_CMD.format(watch_id=watch_id, ice_creds=CREDENTIALS['ice_creds'])
     # thread = pexpect.popen_spawn.PopenSpawn(command)
     # cpl = thread.compile_pattern_list(
     #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
@@ -247,15 +247,12 @@ def ingest_video(watch_id, queue):
     child.sendline(command)
     print("Starting stream...")
 
-    # s = SlackPost()
-    # s.data = {"text": "Starting stream {0}".format(command)}
-    # s.send()
-
+    queue.put({'message': "Starting stream {0}".format(command)})
     result = child.expect('Closing currently open stream')
-
     print("Exited")
-    print(result)
-    queue.put({'ingesting': False})
+    queue.put({
+        'message': "Stream ended",
+        'ingesting': False})
 
     # s = SlackPost()
     # s.data = {"text": "Stream stopped."}
@@ -311,7 +308,6 @@ def run():
             except:
                 pass
 
-            print(messages)
             for key in messages.keys():
                 if 'ingesting' == key:
                     if messages[key]:
@@ -324,6 +320,11 @@ def run():
                         notify(
                             key, messages[key]['start'], 0, priority='ALERT')
                         messages[key]['sent'] = True
+                if 'message' == key:
+
+                    s = SlackPost()
+                    s.data = {"text": messages[key]}
+                    s.send()
 
             time.sleep(25)
             continue
