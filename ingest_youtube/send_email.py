@@ -79,4 +79,4 @@ class SlackPost():
             data=json.dumps(self.data),
             headers={"Content-type": "application/json;"})
 
-        print("Slack post: "+response[content])
+        print("Slack post: "+response)
