@@ -247,18 +247,19 @@ def ingest_video(watch_id, queue):
     child.sendline(command)
     print("Starting stream...")
 
-    s = SlackPost()
-    s.data = {"text": "Starting stream {0}".format(command)}
-    s.send()
+    # s = SlackPost()
+    # s.data = {"text": "Starting stream {0}".format(command)}
+    # s.send()
 
     result = child.expect('Closing currently open stream')
+
     print("Exited")
     print(result)
     queue.put({'ingesting': False})
 
-    s = SlackPost()
-    s.data = {"text": "Stream stopped."}
-    s.send()
+    # s = SlackPost()
+    # s.data = {"text": "Stream stopped."}
+    # s.send()
 
     # while True:
     #     # print("Running {0}".format(command))
