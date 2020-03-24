@@ -324,7 +324,7 @@ def run():
                             key, messages[key]['start'], 0, priority='ALERT')
                         messages[key]['sent'] = True
 
-            time.sleep(15)
+            time.sleep(10)
             continue
 
         except KeyboardInterrupt:
