@@ -173,8 +173,14 @@ def get_item_from_collection(
 
             # Check tags
             fd = mutagen.File(file_path, easy=True)
-            fd.tags['DATE'] = publish_date.strftime('%Y')
-            fd.tags['Title'] =  publication['headline']
+            try:
+                fd.tags['DATE'] = publish_date.strftime('%Y')
+            except:
+                pass
+            try:
+                fd.tags['Title'] =  publication['headline']
+            except:
+                pass
             try:
                 fd.tags['Language'] =  publication['media'][0]['primary_language']
             except:
