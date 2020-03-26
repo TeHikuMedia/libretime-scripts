@@ -59,7 +59,7 @@ def get_watch_id(channel_id):
     r = requests.get(url)
     result = r.json()
     try:
-        return result['items'][0]['id']['videoId']
+        return result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
     except:
         return None
 
