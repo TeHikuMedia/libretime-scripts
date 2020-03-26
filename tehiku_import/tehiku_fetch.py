@@ -173,6 +173,10 @@ def get_item_from_collection(
 
             # Check tags
             fd = mutagen.File(file_path, easy=True)
+            if not fd:
+                print("Error with {0}\n{1}".format(collection, publication))
+                continue
+
             try:
                 fd.tags['DATE'] = publish_date.strftime('%Y')
             except:
