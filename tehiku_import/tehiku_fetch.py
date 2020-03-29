@@ -135,6 +135,8 @@ def get_item_from_collection(
 
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
+        print('EXISTS: ', file_path)
+        print('EXISTS: ', '.'.join(file_path.split('.')[0:-1])+'.ogg')
         if os.path.isfile(file_path) or os.path.isfile(
                 '.'.join(file_path.split('.')[0:-1])+'.ogg'):
             # Check if we should delete it
@@ -147,7 +149,7 @@ def get_item_from_collection(
                 continue
             elif now - publish_date <= timedelta(days=expire):
                 # Check file hasn't changed
-                p = Popen(['curl','-I',file_url], stdin=PIPE, stdout=PIPE)
+                p = Popen(['curl', '-s','-I',file_url], stdin=PIPE, stdout=PIPE)
                 output, error = p.communicate()
                 m = re.search(r'([a-fA-F0-9]{32})', str(output))
                 try:
