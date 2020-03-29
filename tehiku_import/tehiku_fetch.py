@@ -32,6 +32,15 @@ args = parser.parse_args()
 timezone = pytz.timezone("Pacific/Auckland")
 STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
 
+def convert_audio(file_path):
+    outfile = '.'.join( file_path.split('.')[:-1] )+'.ogg'
+    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libvorbis', '-b:a', '128k', outfile]
+    print(cmd)
+    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    Popen(['rm', file_path])
+    return outfile
+
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
     offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
@@ -178,8 +187,9 @@ def get_item_from_collection(
             # Check tags
             fd = mutagen.File(file_path, easy=True)
             if not fd:
-                print("Error with {0}\n{1}".format(collection, publication))
-                continue
+                # Convert to FLAC
+                file_path = convert_audio(file_path)
+                fd = mutagen.File(file_path, easy=True)
 
             try:
                 fd.tags['DATE'] = publish_date.strftime('%Y')
@@ -201,6 +211,7 @@ def get_item_from_collection(
             fd.save()
 
             # Try to embed picture
+            print(publication['image_thumb_small'])
             add_artwork(publication['image_thumb_small'], file_path)
             
 
