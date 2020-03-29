@@ -26,6 +26,8 @@ try:
     f.close()
     ROOT_FOLDERS = d['search_folders']
     LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
+    if not os.path.exists(LOGFILE):
+        Popen(['touch', LOGFILE])
     TMP_DIR = d['tmp_dir']
     S3_BUCKET = d['aws']['s3_bucket']
     AWS_ACCESS_KEY = d['aws']['access_key']
