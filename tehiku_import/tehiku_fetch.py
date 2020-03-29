@@ -110,7 +110,11 @@ def get_item_from_collection(
             file_name = "tehiku_{0}_{1}".format(collection['id'], pub_id)
         print(file_name)
 
-        file_url = publication['media'][0]['media_file']
+        try:
+            file_url = publication['media'][0]['media_file']
+        except:
+            print('No media file, skipping...')
+            continue
         file_extension = file_url.split('.')[-1]
 
         file_path = os.path.join(ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
