@@ -52,6 +52,9 @@ def scan_folder(ROOT_FOLDER):
             if '.' is name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
+            elif name[0] in "~!#.?":
+                logging.debug('Skipping {0}'.format(name))
+                continue
             elif name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg':
                 logging.debug('Skipping {0}'.format(name))
                 continue
@@ -83,6 +86,7 @@ def scan_folder(ROOT_FOLDER):
             except IndexError as e:
                 language = None
                 logging.warning('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.warning("{0} :: {1}".format(parts, RELATIVE))
                 continue
 
             try:
@@ -90,6 +94,7 @@ def scan_folder(ROOT_FOLDER):
             except IndexError as e:
                 genre = None
                 logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.warning("{0} :: {1}".format(parts, RELATIVE))
 
             if '#' in root:
                 m = re.findall(r'\/(#[^\/]*)\/', root)

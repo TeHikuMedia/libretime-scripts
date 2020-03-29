@@ -135,8 +135,6 @@ def get_item_from_collection(
 
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
-        print('EXISTS: ', file_path)
-        print('EXISTS: ', '.'.join(file_path.split('.')[0:-1])+'.ogg')
         if os.path.isfile(file_path) or os.path.isfile(
                 '.'.join(file_path.split('.')[0:-1])+'.ogg'):
             # Check if we should delete it
@@ -158,6 +156,7 @@ def get_item_from_collection(
                     print(output, error)
                     md5 = None
 
+                # What about hash for files we converted
                 if not hash_exists(md5):
                     print('File needs updating.')
                     DOWNLOAD = True
@@ -197,6 +196,11 @@ def get_item_from_collection(
             if not fd:
                 # Convert to FLAC
                 file_path = convert_audio(file_path)
+                p = Popen([MD5_CMD, file_path], stdin=PIPE, stdout=PIPE)
+                output, error = p.communicate()
+                m = re.search(r'([a-fA-F0-9]{32})', str(output))
+                md5_local = m.groups()[0]
+                store_hash(md5_local)
                 fd = mutagen.File(file_path, easy=True)
 
             try:
