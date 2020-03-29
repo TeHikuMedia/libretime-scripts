@@ -123,6 +123,7 @@ def get_item_from_collection(
             file_url = publication['media'][0]['media_file']
             extension = file_url.split('.')[-1]
             if extension not in 'mp4 m4a mp3 wav ogg aiff':
+                # What about video files?
                 print('Not an audio file.')
                 continue
         except:
@@ -135,7 +136,7 @@ def get_item_from_collection(
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
         if os.path.isfile(file_path) or os.path.isfile(
-                '.',join(file_path.split('.')[0:-1])+'.ogg'):
+                '.'.join(file_path.split('.')[0:-1])+'.ogg'):
             # Check if we should delete it
             if now - publish_date > timedelta(days=expire) or delete:
                 # Remove old item
