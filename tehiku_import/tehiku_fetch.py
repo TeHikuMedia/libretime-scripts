@@ -130,7 +130,8 @@ def get_item_from_collection(
 
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) or os.path.isfile(
+                '.',join(file_path.split('.')[0:-1])+'.ogg'):
             # Check if we should delete it
             if now - publish_date > timedelta(days=expire) or delete:
                 # Remove old item
@@ -164,7 +165,7 @@ def get_item_from_collection(
                 DOWNLOAD = True
 
         if DOWNLOAD:
-            cmd = [ 'curl', '-L', file_url, '-o', file_path]
+            cmd = ['curl', '-s', '-L', file_url, '-o', file_path]
             p = Popen(cmd, stdin=PIPE, stdout=PIPE)
             output, error = p.communicate()
             if error:
@@ -211,7 +212,7 @@ def get_item_from_collection(
             fd.save()
 
             # Try to embed picture
-            print(publication['image_thumb_small'])
+            # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
             add_artwork(publication['image_thumb_small'], file_path)
             
 

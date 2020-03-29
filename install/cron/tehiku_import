@@ -1,11 +1,6 @@
-# m    h  dom mon dow   user command
-#15 5,17 * * * /home/ubuntu/sync_db_to_bucket.sh
-#1 0 * * MON-SAT /home/ubuntu/sync_files_no_md5.sh
-#1 0 * * SUN /home/ubuntu/sync_files_md5.sh
-#
-#
+# CRON JOBS FOR TE HIKU FM CONTENT
 */15,56-59 17-23,0-6 * * 1-5	root	/usr/local/bin/waatea-fetch > /tmp/cron.waatea.log
-*/2 19-23,0-7 * * 1-5	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 -l Interview > /var/log/airtime/cron.interviews.log
+*/2 19-23,0-7 * * 1-5	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 -l Interview > /tmp/cron.interviews.log
 */10 19-23,0-6 * * 1-5	root	/usr/local/bin/tehiku-fetch -c panui -d -l Pānui > /tmp/cron.daily.log
 */10 19-23,0-6 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-tohu -d -l 'Ngā Tohu'> /tmp/cron.daily.log
 */15,26-29 18-21,0-3 * * 1-5	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News > /tmp/cron.ampm.log

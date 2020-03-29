@@ -39,7 +39,9 @@ setup(
         's3cmd',
         'pexpect',
         'boto3',
-        'pyyaml'
+        'pyyaml',
+        'requests',
+        'pytz'
     ],
     entry_points={
         "console_scripts": [
