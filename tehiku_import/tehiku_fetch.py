@@ -121,8 +121,12 @@ def get_item_from_collection(
 
         try:
             file_url = publication['media'][0]['media_file']
+            extension = file_url.split('.')[-1]
+            if extension not in 'mp4 m4a mp3 wav ogg aiff':
+                print('Not an audio file.')
+                continue
         except:
-            print('No media file, skipping...')
+            print('No media file, skipping.')
             continue
         file_extension = file_url.split('.')[-1]
 
