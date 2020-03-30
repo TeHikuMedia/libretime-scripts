@@ -1,4 +1,5 @@
 import os
+import re
 import mutagen
 import logging
 import json
@@ -43,17 +44,25 @@ except Exception as e:
 def scan_folder(ROOT_FOLDER):
     NUM_FILES = 0
     for root, dirs, files in os.walk(ROOT_FOLDER):
-        if '#' in root:
-            continue
+        # if '#' in root:
+        #     continue
         for name in files:
             NUM_FILES = NUM_FILES + 1
-            # print("Checking {0}".format(os.path.join(root,name)))
+            # print("Checking {0} :: {1}".format(root,name))
+
+            folders = root.split('/')
+            for folder in folders:
+                if folder:
+                    if folder[0] in "~!#.?":
+                        # print(folder)
+                        logging.info('Skipping {0}/{1}'.format(root,name))
+                        continue
 
             if '.' is name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
             elif name[0] in "~!#.?":
-                logging.debug('Skipping {0}'.format(name))
+                logging.info('Skipping {0}'.format(name))
                 continue
             elif name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg':
                 logging.debug('Skipping {0}'.format(name))
@@ -86,7 +95,6 @@ def scan_folder(ROOT_FOLDER):
             except IndexError as e:
                 language = None
                 logging.warning('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
-                logging.warning("{0} :: {1}".format(parts, RELATIVE))
                 continue
 
             try:
@@ -94,12 +102,19 @@ def scan_folder(ROOT_FOLDER):
             except IndexError as e:
                 genre = None
                 logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
-                logging.warning("{0} :: {1}".format(parts, RELATIVE))
 
             if '#' in root:
-                m = re.findall(r'\/(#[^\/]*)\/', root)
-                exclude = m[-1]
-                label = label + ' :: ' + exclude
+                try:
+                    m = re.findall(r'\/(#[^\/]*)', root)
+                # print(m)
+                    exclude = m[-1]
+                    label = label + ' :: ' + exclude
+                except:
+                    print(root)
+
+                    raise error
+                # print(label)
+                # raise error
 
             try:
                 audio = mutagen.File(os.path.join(root, name), easy=True)

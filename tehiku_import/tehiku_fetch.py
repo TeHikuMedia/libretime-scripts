@@ -2,9 +2,9 @@ import mutagen
 from mutagen.id3 import ID3, APIC
 import requests
 from datetime import datetime, timedelta
+import time
 import pytz
 from math import floor
-import time
 import json
 import re
 from subprocess import Popen, PIPE
@@ -33,8 +33,8 @@ timezone = pytz.timezone("Pacific/Auckland")
 STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
 
 def convert_audio(file_path):
-    outfile = '.'.join( file_path.split('.')[:-1] )+'.ogg'
-    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libvorbis', '-b:a', '128k', outfile]
+    outfile = '.'.join( file_path.split('.')[:-1] )+'.mp3'
+    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libmp3lame', '-b:a', '128k', outfile]
     print(cmd)
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
@@ -119,6 +119,7 @@ def get_item_from_collection(
             file_name = "tehiku_{0}_{1}".format(collection['id'], pub_id)
         print(file_name)
 
+        extension = 'None'
         try:
             file_url = publication['media'][0]['media_file']
             extension = file_url.split('.')[-1]
@@ -135,8 +136,13 @@ def get_item_from_collection(
 
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
-        if os.path.isfile(file_path) or os.path.isfile(
-                '.'.join(file_path.split('.')[0:-1])+'.ogg'):
+
+        if not os.path.isfile(file_path):
+            converted_file = '.'.join(file_path.split('.')[0:-1])+'.mp3'
+            if os.path.isfile(converted_file):
+                file_path = converted_file
+
+        if os.path.isfile(file_path):
             # Check if we should delete it
             if now - publish_date > timedelta(days=expire) or delete:
                 # Remove old item
@@ -149,15 +155,15 @@ def get_item_from_collection(
                 # Check file hasn't changed
                 p = Popen(['curl', '-s','-I',file_url], stdin=PIPE, stdout=PIPE)
                 output, error = p.communicate()
-                m = re.search(r'([a-fA-F0-9]{32})', str(output))
-                try:
-                    md5 = m.groups()[0]
-                except Exception as e:
-                    print(output, error)
-                    md5 = None
 
-                # What about hash for files we converted
-                if not hash_exists(md5):
+                m = re.search(r'last-modified: ([\w|,| |:]+)', str(output))
+                last_modifed = pytz.utc.localize(
+                    datetime.strptime(m.groups()[0], '%a, %d %b %Y %H:%M:%S %Z'))
+
+                file_timestamp = pytz.utc.localize(
+                    datetime.utcfromtimestamp(os.path.getmtime(file_path)))
+  
+                if last_modifed > file_timestamp:
                     print('File needs updating.')
                     DOWNLOAD = True
                 else:
@@ -177,11 +183,9 @@ def get_item_from_collection(
             if error:
                 print("Could not download file")
 
-            p = Popen([MD5_CMD, file_path], stdin=PIPE, stdout=PIPE)
-            output, error = p.communicate()
-            m = re.search(r'([a-fA-F0-9]{32})', str(output))
-            md5_local = m.groups()[0]
-            store_hash(md5_local)
+            if extension not in 'flac mp3':
+                # Convert to mp3
+                file_path = convert_audio(file_path)
 
             if duration:
                 scale_media(file_path, duration)
@@ -191,17 +195,7 @@ def get_item_from_collection(
             p = Popen(['chgrp', 'www-data', file_path], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
-            # Check tags
             fd = mutagen.File(file_path, easy=True)
-            if not fd:
-                # Convert to FLAC
-                file_path = convert_audio(file_path)
-                p = Popen([MD5_CMD, file_path], stdin=PIPE, stdout=PIPE)
-                output, error = p.communicate()
-                m = re.search(r'([a-fA-F0-9]{32})', str(output))
-                md5_local = m.groups()[0]
-                store_hash(md5_local)
-                fd = mutagen.File(file_path, easy=True)
 
             try:
                 fd.tags['DATE'] = publish_date.strftime('%Y')
