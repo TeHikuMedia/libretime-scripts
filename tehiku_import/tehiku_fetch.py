@@ -34,7 +34,7 @@ STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
 
 def convert_audio(file_path):
     outfile = '.'.join( file_path.split('.')[:-1] )+'.mp3'
-    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libmp3lame', '-b:a', '128k', outfile]
+    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libmp3lame', '-b:a', '192k', outfile]
     print(cmd)
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
