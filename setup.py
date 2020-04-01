@@ -29,7 +29,7 @@ conf_dict = read_configuration("setup.cfg")
 
 setup(
     name="libretime_scripts",
-    version="0.2",
+    version="0.2.1",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
     packages=find_packages(),

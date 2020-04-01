@@ -13,7 +13,7 @@ from mutagen.mp3 import HeaderNotFoundError
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbisHeaderError
 from mutagen.flac import FLACNoHeaderError
-
+from unicodedata import normalize
 
 CONF_FILE = "/etc/librescripts/conf.json"
 ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
@@ -86,20 +86,20 @@ def scan_folder(ROOT_FOLDER):
                 continue
 
             try:
-                label = parts[0]
+                label = normalize('NFC',parts[0])
             except IndexError as e:
                 logging.warning('File not properly organized: {0}'.format(name))
                 continue
 
             try:
-                language = parts[1]
+                language = normalize('NFC',parts[1])
             except IndexError as e:
                 language = None
                 logging.warning('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
                 continue
 
             try:
-                genre = parts[2]
+                genre = normalize('NFC',parts[2])
             except IndexError as e:
                 genre = None
                 logging.debug('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
@@ -129,7 +129,6 @@ def scan_folder(ROOT_FOLDER):
                 logging.debug("UPDATE:  {0}".format(name.encode('utf-8')))
             logging.debug('TAGS:    {0}'.format(audio))
 
-
             SAVE = False
             if audio:
 
@@ -139,14 +138,6 @@ def scan_folder(ROOT_FOLDER):
                 except KeyError:
                     l = []
                 if language:
-                    vowels = (
-                        ('ā', 'ē', 'ī', 'ō', 'ū', 'Ā', 'Ē', 'Ī', 'Ō', 'Ū'),
-                        ('ā', 'ē', 'ī', 'ō', 'ū', 'Ā', 'Ē', 'Ī', 'Ō', 'Ū')
-                    )
-                    for i in range(len(vowels[0])):
-                        if vowels[0][i] in language:
-                            language = language.replace(vowels[0][i], vowels[1][i])
-
                     if [language] != l:
                         l = [language]
                         try:
