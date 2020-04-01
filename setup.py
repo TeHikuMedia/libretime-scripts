@@ -12,7 +12,9 @@ data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
     #('/etc/cron.d',           ['install/cron/update_metadata']),
     ('/etc/cron.d',           [
-        'install/cron/tehiku_import',]),
+        'install/cron/tehiku_import',
+        'install/cron/update_metadata'
+    ]),
 ]
 
 LOG_DIR  = '/var/log/librescripts'

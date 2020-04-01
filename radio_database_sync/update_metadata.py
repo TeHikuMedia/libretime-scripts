@@ -46,23 +46,24 @@ def scan_folder(ROOT_FOLDER):
     for root, dirs, files in os.walk(ROOT_FOLDER):
         # if '#' in root:
         #     continue
+        # print(root, dirs, files)
         for name in files:
             NUM_FILES = NUM_FILES + 1
             # print("Checking {0} :: {1}".format(root,name))
 
-            folders = root.split('/')
-            for folder in folders:
-                if folder:
-                    if folder[0] in "~!#.?":
-                        # print(folder)
-                        logging.info('Skipping {0}/{1}'.format(root,name))
-                        continue
+            # folders = root.split('/')
+            # for folder in folders:
+            #     if folder:
+            #         if folder[0] in "~!#.?":
+            #             # print(folder)
+            #             logging.info('Skipping {0}/{1}'.format(root,name))
+            #             continue
 
             if '.' is name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
             elif name[0] in "~!#.?":
-                logging.info('Skipping {0}'.format(name))
+                logging.debug('Skipping {0}'.format(name))
                 continue
             elif name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg':
                 logging.debug('Skipping {0}'.format(name))
@@ -101,7 +102,7 @@ def scan_folder(ROOT_FOLDER):
                 genre = parts[2]
             except IndexError as e:
                 genre = None
-                logging.info('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.debug('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
 
             if '#' in root:
                 try:
@@ -138,13 +139,21 @@ def scan_folder(ROOT_FOLDER):
                 except KeyError:
                     l = []
                 if language:
+                    vowels = (
+                        ('ā', 'ē', 'ī', 'ō', 'ū', 'Ā', 'Ē', 'Ī', 'Ō', 'Ū'),
+                        ('ā', 'ē', 'ī', 'ō', 'ū', 'Ā', 'Ē', 'Ī', 'Ō', 'Ū')
+                    )
+                    for i in range(len(vowels[0])):
+                        if vowels[0][i] in language:
+                            language = language.replace(vowels[0][i], vowels[1][i])
+
                     if [language] != l:
                         l = [language]
                         try:
-                            audio['language'] = l
+                            audio.tags['language'] = l
                         except:
                             try:
-                                audio['language'] = language
+                                audio.tags['language'] = language
                             except Exception as e:
                                 logging.warning("Could now write 'langauge' to {0}".format(name))
                                 continue
@@ -166,10 +175,10 @@ def scan_folder(ROOT_FOLDER):
                 logging.debug("LABEL:   {0}".format(t))
                 if SAVE:
                     try:
-                        audio['label'] = t
+                        audio.tags['label'] = t
                     except KeyError:
                         pass
-                    audio['organization'] = t
+                    audio.tags['organization'] = t
 
                 # TAG: GENRE
                 try:
@@ -182,7 +191,7 @@ def scan_folder(ROOT_FOLDER):
                         SAVE = True
                         g = [genre]
                         logging.debug("GENRE:   {0}".format(t))
-                        audio['genre'] = g
+                        audio.tags['genre'] = g
 
                 if SAVE:
                     logging.info(
