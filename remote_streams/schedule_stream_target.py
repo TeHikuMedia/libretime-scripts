@@ -32,8 +32,8 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = datetime.strptime('2020/04/2 13:00:00', '%Y/%m/%d %H:%M:%S').astimezone(timezone)
-END_TIME = datetime.strptime('2020/04/2 17:00:00', '%Y/%m/%d %H:%M:%S').astimezone(timezone)
+START_TIME = datetime.strptime('2020/04/02 13:00:00', '%Y/%m/%d %H:%M:%S').astimezone(timezone)
+END_TIME = datetime.strptime('2020/04/02 17:00:00', '%Y/%m/%d %H:%M:%S').astimezone(timezone)
 
 # Load Configuration
 try:
@@ -94,6 +94,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
         # Get list of stream targets
 
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
+        NOW = timezone.localize(NOW)
         try:
             for target in entries:
                 # print(target)
