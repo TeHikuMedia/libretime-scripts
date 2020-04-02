@@ -8,12 +8,13 @@ from mutagen.mp3 import MP3
 from mutagen.oggvorbis import OggVorbis
 from mutagen.flac import FLAC
 import mutagen
-from mutagen.id3 import ID3NoHeaderError
+from mutagen.id3 import ID3NoHeaderError, ID3, TIT2
 from mutagen.mp3 import HeaderNotFoundError
 from mutagen.mp4 import MP4
 from mutagen.oggvorbis import OggVorbisHeaderError
 from mutagen.flac import FLACNoHeaderError
 from unicodedata import normalize
+from subprocess import Popen, PIPE
 
 CONF_FILE = "/etc/librescripts/conf.json"
 ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
@@ -44,12 +45,11 @@ except Exception as e:
 def scan_folder(ROOT_FOLDER):
     NUM_FILES = 0
     for root, dirs, files in os.walk(ROOT_FOLDER):
-        # if '#' in root:
-        #     continue
-        # print(root, dirs, files)
+
+
         for name in files:
             NUM_FILES = NUM_FILES + 1
-            # print("Checking {0} :: {1}".format(root,name))
+
 
             # folders = root.split('/')
             # for folder in folders:
@@ -112,16 +112,53 @@ def scan_folder(ROOT_FOLDER):
                     label = label + ' :: ' + exclude
                 except:
                     print(root)
-
                     raise error
-                # print(label)
-                # raise error
+
 
             try:
                 audio = mutagen.File(os.path.join(root, name), easy=True)
             except Exception as e:
                 logging.warning('Could not load file with mutagen: {0}'.format(name))
                 continue
+
+            if not audio:
+                file_path = os.path.join(root, name)
+                if os.path.exists(file_path):
+                    print(f"Exists: {file_path}")
+                    extension = name.split('.')[-1]
+
+                    if extension.lower() in 'wave':
+                        continue
+
+                    logging.warning("Audio is none")
+                    
+                    outfile = '/tmp/tmp.' + extension
+                    cmd = [
+                        'ffmpeg', '-y', '-v', 'quiet',
+                        '-i', file_path,
+                        '-c:a', 'copy', outfile
+                    ]
+                    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+                    out, err = p.communicate()
+                    Popen(['mv', outfile, file_path])
+  
+                    try:
+                        audio = mutagen.File(file_path, easy=True)
+                    except Exception as e:
+                        logging.warning('Could not load file with mutagen after conversion: {0}'.format(name))
+                        continue
+
+                    if not audio:
+                        logging.warning('Atemting to add tags so we can use "easy": {0}'.format(name))
+
+                        if extension.lower() in 'mp3':
+                            audio = ID3(file_path, translate=False)
+                            audio.add(TIT2(encoding=3, text=name))
+                            audio.save()
+                            audio = mutagen.File(file_path, easy=True)
+        
+                else:
+                    print("NO exists!")
 
             try:
                 logging.debug("UPDATE:  {0}".format(' '.join(audio['title'].encode('utf-8'))))
@@ -191,6 +228,7 @@ def scan_folder(ROOT_FOLDER):
                     audio.save()
 
                 logging.debug(audio)
+
 
 
     logging.info("Scanned {0} files in {1}".format(NUM_FILES, ROOT_FOLDER))
