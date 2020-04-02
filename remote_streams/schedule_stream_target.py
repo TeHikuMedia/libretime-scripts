@@ -33,7 +33,7 @@ HEADERS ={
 }
 
 START_TIME = timezone.localize(datetime.strptime('2020/04/02 13:00:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/04/02 17:00:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime('2020/04/02 23:00:00', '%Y/%m/%d %H:%M:%S'))
 
 # Load Configuration
 try:
@@ -94,7 +94,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
         # Get list of stream targets
 
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
-        NOW = NOW.astimezone(timezone)
+        # NOW = NOW.astimezone(timezone)
         print(NOW)
         print(end_time)
         print(start_time)
