@@ -1,0 +1,11 @@
+[Unit]
+Description=Scheudle stream target thingy
+
+[Service]
+ExecStart=/usr/local/bin/schedule-stream-target
+User=www-data
+Group=www-data
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
