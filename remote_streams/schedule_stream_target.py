@@ -94,7 +94,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
         # Get list of stream targets
 
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
-        NOW = timezone.localize(NOW)
+        NOW = NOW.astimezone(timezone)
         try:
             for target in entries:
                 # print(target)
