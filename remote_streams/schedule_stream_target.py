@@ -41,7 +41,9 @@ try:
     d = json.loads(f.read())
     f.close()
     
-    LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
+    LOGFILE = os.path.join(d['log_path'], 'schedule_stream_target.log')
+    if not os.path.exists(d['log_path']):
+        os.mkdir(d['log_path'])
     if not os.path.exists(LOGFILE):
         Popen(['touch', LOGFILE])
     TMP_DIR = d['tmp_dir']
