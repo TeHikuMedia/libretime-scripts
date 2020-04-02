@@ -164,7 +164,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
 
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
     if not src:
-        src = "rtmp://rtmp.tehiku.live:1935/rtmp/test"
+        src = "rtmp://rtmp.tehiku.live:1935/rtmp/teaonews"
     if not dst:
         dst = "rtmp://rtmp.tehiku.live:1935/rtmp/teaonews_mono"
 
