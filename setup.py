@@ -11,7 +11,13 @@ os.chdir(script_path)
 data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
     #('/etc/cron.d',           ['install/cron/update_metadata']),
-    ('/etc/cron.d',           [
+    ('/etc/init.d', [
+        'install/sysvinit/schedule_stream_target',
+    ]),
+    ('/etc/init',[
+        'install/upstart/schedule_stream_target.conf'
+    ]),
+    ('/etc/cron.d', [
         'install/cron/tehiku_import',
         'install/cron/update_metadata'
     ]),
@@ -51,6 +57,7 @@ setup(
             "waatea-fetch = tehiku_import.waatea_import:main",
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
             "radio-db-actions = radio_database_sync.db_management:main",
+            "schedule-stream-target = remote_streams.schedule_stream_target:main"
         ]
     },
     data_files=conf_dict['options']['data_files']
