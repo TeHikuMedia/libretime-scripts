@@ -32,8 +32,8 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/04/02 13:00:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/04/02 23:00:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 13:00:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
 
 # Load Configuration
 try:
@@ -90,12 +90,19 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
     - webhook better! -
     '''
 
+    start = start_time.hour*60*60 + start_time.minute*60 + start_time.second
+    end   = end_time.hour*60*60   + end_time.minute*60   + end_time.second
+
     entries = ['Push to tehiku.radio', 'Sunshine Radio']
     ENABLED = False
     while not ENABLED:
         # Get list of stream targets
 
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
+        NOW = NOW.astimezone(timezone)
+
+        now = NOW.hour*60*60 + NOW.minute*60 + NOW.second
+
         try:
             for target in entries:
                 # print(target)
@@ -103,14 +110,14 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
                     if target in entry['entryName']:
                         st = entry
 
-                        if start_time > NOW:
+                        if start > now:
                             # Stream shoudl be disabled
                             if st['enabled']:
                                 print('\nDisabling stream targets')
                                 st['enabled'] = False
                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
                                 wowza_put_data(RESOURCE, st)
-                        elif start_time <= NOW and end_time >= NOW:
+                        elif start <= now and end >= now:
                             if not st['enabled']:
                                 print("\nEnabling stream targets")
                                 st['enabled'] = True
@@ -119,7 +126,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
 
                             queue.put({'start_stream': True})
 
-                        elif end_time <= NOW:
+                        elif end <= now:
                             if  st['enabled']:
                                 print("\nDisabling stream targets")
                                 st['enabled'] = False
