@@ -67,14 +67,27 @@ def wowza_put_data(resource, data):
 
 def wowza_get_targets():
     success = False
+    indi = '-/|\\-'
+    count = 0
     while not success:
+        if count >= 3:
+            count = 0
+        else:
+            count = count + 1
+
         RESOURCE = "applications/rtmp/pushpublish/mapentries"
-        r = requests.get(os.path.join(BASEURL, RESOURCE), auth=HTTPDigestAuth('API', 'Ku4ka1840'), headers=HEADERS)
-        data = r.json()
         try:
+            r = requests.get(os.path.join(BASEURL, RESOURCE), auth=HTTPDigestAuth('API', 'Ku4ka1840'), headers=HEADERS)
+            data = r.json()
             success = data['success']
         except KeyError:
             success = True
+        except Exception as e:
+            print(f"\rError querying wowza server... {indi[count]}", end='')
+            success = False
+        
+        if not success:
+            sleep(1)
 
     return data
 
