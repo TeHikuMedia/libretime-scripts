@@ -35,6 +35,8 @@ HEADERS ={
 START_TIME = timezone.localize(datetime.strptime('2020/03/02 13:00:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
 
+SOURCE_STREAM_NAME = 'teaonews_mono'
+
 # Load Configuration
 try:
     f = open(CONF_FILE, 'rb')
@@ -128,12 +130,14 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
                             if st['enabled']:
                                 print('\nDisabling stream targets')
                                 st['enabled'] = False
+                                st['sourceStreamName'] = SOURCE_STREAM_NAME
                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
                                 wowza_put_data(RESOURCE, st)
                         elif start <= now and end >= now:
                             if not st['enabled']:
                                 print("\nEnabling stream targets")
                                 st['enabled'] = True
+                                st['sourceStreamName'] = SOURCE_STREAM_NAME
                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
                                 wowza_put_data(RESOURCE, st)
 
@@ -166,7 +170,7 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
     if not src:
         src = "rtmp://rtmp.tehiku.live:1935/rtmp/teaonews"
     if not dst:
-        dst = "rtmp://rtmp.tehiku.live:1935/rtmp/teaonews_mono"
+        dst = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
 
     cmd = [
         'ffmpeg', '-re', '-loglevel', 'warning', '-i', src,

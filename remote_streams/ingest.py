@@ -12,6 +12,8 @@ import signal
 import requests
 import yaml
 
+from subprocess import Popen, PIPE
+
 filename = 'silence.log'
 command = '/usr/local/bin/ffmpeg -i "http://radio.tehiku.live:8040/stream;1" -af silencedetect=d=3 -f null -'
 # command = '/usr/local/bin/ffmpeg -i "output.aac" -af silencedetect -f null -'
@@ -42,13 +44,29 @@ STREAM_CMD = \
     'streamlink https://www.youtube.com/watch?v={watch_id} best --stdout | ffmpeg -y -re -i pipe: -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg icecast://{ice_creds}@icecast.tehiku.radio:8000/youtube_ingest.ogg'
 
 
+STREAM_CMD = \
+    'streamlink "https://www.youtube.com/watch?v={watch_id}" best -O | ffmpeg -y -re -i pipe:0 -c:v copy -c:a copy -f flv "rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest"'
+
+
+STREAM_LINK = \
+    'streamlink https://www.youtube.com/watch?v={watch_id} best -O'
+
+FFMPEG_STREAM = \
+    'ffmpeg -y -re -loglevel warning -i pipe:0 -c:v copy -c:a copy -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
+
+# FFMPEG_STREAM = \
+#     'ffmpeg -y -re -loglevel warning -i pipe:0 -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg -legacy_icecast 1 icecast://{ice_creds}@libreice.sunshine.tehiku.radio:8002/show'
+
+
+
 GOOGLE_API = \
     "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&eventType=live&type=video&key={google_api_key}"
 
 
 CHANNELS = (
     ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
-    # ('World Surf Leageu', 'UChuLeaTGRcfzo0UjL-2qSbQ'),
+    ('DOC', 'UCNXXjM3fkppSxEQIwBloIvA'),
+    ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow')
 )
 
 with open("vault.yml", 'r') as file:
@@ -59,8 +77,13 @@ def get_watch_id(channel_id):
     r = requests.get(url)
     result = r.json()
     try:
-        return result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
+        video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
+        if type(video_id) == tuple:
+            return video_id[0]
+        return video_id
     except:
+        print("Error getting watch id for {0}".format(channel_id))
+        print(result)
         return None
 
 
@@ -242,17 +265,44 @@ def ingest_video(watch_id, queue):
     # thread = pexpect.popen_spawn.PopenSpawn(command)
     # cpl = thread.compile_pattern_list(
     #     [pexpect.EOF, '\[silencedetect .*] (.*)'])
-    print(command)
-    child = pexpect.spawn('/bin/bash')
-    child.sendline(command)
+    # print(command)
+    # child = pexpect.spawn('/bin/bash')
+    # child.sendline(command)
     print("Starting stream...")
 
-    queue.put({'message': "Starting stream {0}".format(command)})
-    result = child.expect('Closing currently open stream')
-    print("Exited")
-    queue.put({
-        'message': "Stream ended",
-        'ingesting': False})
+    # queue.put({'message': "Starting stream {0}".format(command)})
+    # result = child.expect('Closing currently open stream')
+    # print("Exited")
+    # queue.put({
+    #     'message': "Stream ended",
+    #     'ingesting': False})
+
+    print(STREAM_LINK.format(watch_id=watch_id))
+    print(FFMPEG_STREAM)
+    p1 = Popen(STREAM_LINK.format(watch_id=watch_id).split(' '), stdout=PIPE, stderr=PIPE)
+    p2 = Popen(
+        FFMPEG_STREAM.split(' '),
+        stdin=PIPE,
+        stderr=PIPE,
+        stdout=PIPE)
+    
+    while True:
+        output = p1.stdout.readline()
+        p2.stdin.write(output)
+        # print(output)
+        # print(p2.stdout.readline())
+        # print(p2.stderr.readline())
+        # print(p2.stdout.readline())
+        # print(p1.stderr.readline())
+        # output = p2.stdout.readline()
+        # if p2.poll() is not None:
+            # break
+        # if output:
+            # print(output.strip())
+
+    # print(o)
+    # print(e)
+
 
     # s = SlackPost()
     # s.data = {"text": "Stream stopped."}
@@ -294,6 +344,7 @@ def run():
                     watch_id = get_watch_id(channel[1])
                     if watch_id is not None:
                         break
+                    time.sleep(2)
 
             if watch_id and not watching:
                 print("Ingesting {0}".format(watch_id))
@@ -322,11 +373,12 @@ def run():
                         messages[key]['sent'] = True
                 if 'message' == key:
 
-                    s = SlackPost()
-                    s.data = {"text": messages[key]}
-                    s.send()
+                    pass
+                    # s = SlackPost()
+                    # s.data = {"text": messages[key]}
+                    # s.send()
 
-            time.sleep(25)
+            time.sleep(60)
             continue
 
         except KeyboardInterrupt:

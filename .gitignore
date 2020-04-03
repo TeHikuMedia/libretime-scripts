@@ -5,3 +5,6 @@ build*
 dist*
 *.egg*
 vault.yml
+tmp*
+*.mp4
+*.pyc
