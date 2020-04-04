@@ -2,7 +2,22 @@ import boto3
 from botocore.exceptions import ClientError
 import time
 import tempfile as tf
+from remote_streams.settings import CONF_FILE
 
+# Load Configuration
+try:
+    f = open(CONF_FILE, 'rb')
+    d = json.loads(f.read())
+    f.close()
+    
+    AWS_KEY = d['aws']['access_key_face']
+    AWS_ID = d['aws']['secret_key_face']
+except KeyError as e:
+    print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
+    raise
+except Exception as e:
+    print('Could not read configuration file {0}.'.format(CONF_FILE))
+    raise
        
 BUCKET = "face-detections"
 
@@ -55,7 +70,10 @@ def detect_faces(bucket, key, attributes=['ALL'], region="ap-southeast-2"):
     return response['FaceDetails']
 
 def detect_faces_binary(binary_image, attributes=['DEFAULT'], region='us-west-2'):
-    rekognition = boto3.client('rekognition',region_name=region)
+    rekognition = boto3.client(
+        'rekognition',region_name=region,
+        aws_access_key_id=AWS_ID,
+        aws_secret_access_key=AWS_KEY)
     img_json = {u'Bytes': binary_image}
     response = rekognition.detect_faces(
         Image=img_json,

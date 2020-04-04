@@ -56,6 +56,8 @@ try:
     SLUG = d['project_slug']
     USER = d['wowza']['user']
     PASSWORD = d['wowza']['password']
+    AWS_KEY = d['aws']['access_key_face']
+    AWS_ID = d['aws']['secret_key_face']
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
@@ -438,7 +440,6 @@ def main():
 {bcolors.FAIL}{emsg}{bcolors.ENDC}\
 {bcolors.OKBLUE}{bcolors.BOLD}{fmsg}{bcolors.ENDC}{bcolors.ENDC}", end='', flush=True)
                 
-
 
         except KeyboardInterrupt as e:
             print("\nCaught KeyboardInterrupt, terminating workers")
