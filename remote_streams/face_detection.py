@@ -6,19 +6,19 @@ from remote_streams.settings import CONF_FILE
 import json
 
 # Load Configuration
-try:
-    f = open(CONF_FILE, 'rb')
-    d = json.loads(f.read())
-    f.close()
+# try:
+#     f = open(CONF_FILE, 'rb')
+#     d = json.loads(f.read())
+#     f.close()
     
-    AWS_KEY = d['aws']['access_key_face']
-    AWS_ID = d['aws']['secret_key_face']
-except KeyError as e:
-    print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
-    raise
-except Exception as e:
-    print('Could not read configuration file {0}.'.format(CONF_FILE))
-    raise
+#     AWS_KEY = d['aws']['access_key_face']
+#     AWS_ID = d['aws']['secret_key_face']
+# except KeyError as e:
+#     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
+#     raise
+# except Exception as e:
+#     print('Could not read configuration file {0}.'.format(CONF_FILE))
+#     raise
        
 BUCKET = "face-detections"
 
