@@ -183,8 +183,6 @@ def get_face(queue):
         except Exception as e:
             queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
             return
-            # print("ERROR:",e)
-        # sleep(1)
 
 
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
@@ -242,7 +240,7 @@ def main():
     wowza_data = None
 
     while loop:
-        sleep(0.1)
+
         if count >= 3:
             count = 0
         else:
