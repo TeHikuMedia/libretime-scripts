@@ -8,3 +8,4 @@ vault.yml
 tmp*
 *.mp4
 *.pyc
+*.jpg

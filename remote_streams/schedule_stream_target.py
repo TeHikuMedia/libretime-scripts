@@ -36,7 +36,7 @@ HEADERS ={
 
 START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:00:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
-
+ENTRIES = ['Face Test'] #, 'Push to tehiku.radio', 'Sunshine Radio']
 SOURCE_STREAM_NAME = 'face_test'
 WAIT_STREAM_NAME = 'face_test_wait'
 DEST_STREAM_NAME = 'face_test_win_win'
@@ -98,9 +98,78 @@ def wowza_get_targets():
     return data
 
 
-def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
+def toggle_stream_targets(queue, wowza_data, state, entries=ENTRIES):
+    for target in entries:
+        for entry in wowza_data['mapEntries']:
+            if target in entry['entryName']:
+                
+                RESOURCE = "applications/rtmp/pushpublish/mapentries/" + target
+                entry['enabled'] = state
+                wowza_put_data(RESOURCE, entry)
 
-    data = wowza_get_targets()
+                queue.put({'targets_enabled': state})
+
+# def enable_stream_targets(queue, wowza_data, entrie=ENTRIES):
+
+#     # TODO
+#     '''
+#     Get the start and stop from an API
+#     Check the API every 5 minutes for schedule change?
+#     - webhook better! -
+#     '''
+
+
+    
+#     ENABLED = False
+#     while not ENABLED:
+#         # Get list of stream targets
+
+#         try:
+#             for target in entries:
+#                 # print(target)
+#                 for entry in wowza_data['mapEntries']:
+#                     if target in entry['entryName']:
+#                         st = entry
+
+#                         if start > now:
+#                             # Stream shoudl be disabled
+#                             if st['enabled']:
+#                                 print('\nDisabling stream targets')
+#                                 st['enabled'] = True
+#                                 st['sourceStreamName'] = DEST_STREAM_NAME
+#                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
+#                                 wowza_put_data(RESOURCE, st)
+#                         elif start <= now and end >= now:
+#                             if st['sourceStreamName'] != DEST_STREAM_NAME:
+#                                 print("\nEnabling stream targets")
+#                                 st['enabled'] = 
+#                                 st['sourceStreamName'] = DEST_STREAM_NAME
+#                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
+#                                 wowza_put_data(RESOURCE, st)
+#                             queue.put({'start_stream': True})
+
+#                         elif end <= now:
+#                             if  st['enabled']:
+#                                 print("\nDisabling stream targets")
+#                                 st['enabled'] = False
+#                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
+#                                 wowza_put_data(RESOURCE, st)
+
+#                             queue.put({'start_stream': False})
+
+#             time.sleep(1)
+
+#         except Exception as e:
+#             print(e)
+#             queue.put({'terminate': True})
+#             return
+
+#         except KeyboardInterrupt as e:
+#             ENABLED = True
+#             queue.put({'terminate': True})
+#             return
+
+def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
 
     # TODO
     '''
@@ -108,65 +177,40 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
     Check the API every 5 minutes for schedule change?
     - webhook better! -
     '''
+    wowza_data = wowza_get_targets()
 
     start = start_time.hour*60*60 + start_time.minute*60 + start_time.second
     end   = end_time.hour*60*60   + end_time.minute*60   + end_time.second
 
-    entries = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio']
-    ENABLED = False
-    while not ENABLED:
-        # Get list of stream targets
-
+    state = [False, False]
+    while True:
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
         NOW = NOW.astimezone(timezone)
-
         now = NOW.hour*60*60 + NOW.minute*60 + NOW.second
 
-        try:
-            for target in entries:
-                # print(target)
-                for entry in data['mapEntries']:
-                    if target in entry['entryName']:
-                        st = entry
+        if start > now:
+            if not state[0]:
+                print("Stop Stream")
+                state[0] = True
+                queue.put({'start_stream': False})
+                toggle_stream_targets(queue, wowza_data, False)
 
-                        if start > now:
-                            # Stream shoudl be disabled
-                            if st['enabled']:
-                                print('\nDisabling stream targets')
-                                st['enabled'] = False
-                                st['sourceStreamName'] = DEST_STREAM_NAME
-                                RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
-                                wowza_put_data(RESOURCE, st)
-                        elif start <= now and end >= now:
-                            if not st['enabled'] or st['sourceStreamName'] != DEST_STREAM_NAME:
-                                print("\nEnabling stream targets")
-                                st['enabled'] = True
-                                st['sourceStreamName'] = DEST_STREAM_NAME
-                                RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
-                                wowza_put_data(RESOURCE, st)
+        elif start <= now and end >= now:
+            if not state[1]:
+                print("Start Stream")
+                queue.put({'start_stream': True})
+                state[1] = True
+                toggle_stream_targets(queue, wowza_data, True)
 
-                            queue.put({'start_stream': True})
+        elif end <= now:
+            if state[1] and state[0]:
+                print("Stop Stream")
+                queue.put({'start_stream': False})
+                state = [False, False]
+                toggle_stream_targets(queue, wowza_data, False)
 
-                        elif end <= now:
-                            if  st['enabled']:
-                                print("\nDisabling stream targets")
-                                st['enabled'] = False
-                                RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
-                                wowza_put_data(RESOURCE, st)
+        time.sleep(1)
 
-                            queue.put({'start_stream': False})
-
-            time.sleep(1)
-
-        except Exception as e:
-            print(e)
-            queue.put({'terminate': True})
-            return
-
-        except KeyboardInterrupt as e:
-            ENABLED = True
-            queue.put({'terminate': True})
-            return
 
 def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
@@ -229,9 +273,11 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
         "error_message": e.decode().replace('\n', ' ')})
 
 def main():
+
     q = Queue()
 
-    stream_toggle = Process(target=toggle_stream_targets, args=(q,))
+    # enable_targets = Process(target=enable_stream_targets, args=(q,data))
+    stream_toggle = Process(target=stream_should_start, args=(q,))
     ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
     has_face = Process(target=get_face, args=(q,))
 
@@ -306,7 +352,7 @@ def main():
                 print("Start FFMPEG Encoding")
                 has_face.terminate()
                 messages['face_starting'] = False
-                
+                messages['face_conf_msg'] = ''
                 messages['ffmpeg_starting'] = True
                 if ffmpeg_stream:
                     ffmpeg_stream.start()
