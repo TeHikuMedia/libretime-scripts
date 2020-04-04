@@ -39,7 +39,7 @@ END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d 
 ENTRIES = ['Face Test'] #, 'Push to tehiku.radio', 'Sunshine Radio']
 SOURCE_STREAM_NAME = 'face_test'
 DEFAULT_STREAM_TAKE = 'teaonews'
-DEST_STREAM_NAME = 'face_test_win_win'
+DEST_STREAM_NAME = 'teaonews_auto'
 
 # Load Configuration
 try:

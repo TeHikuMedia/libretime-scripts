@@ -72,9 +72,11 @@ def detect_faces(bucket, key, attributes=['ALL'], region="ap-southeast-2"):
 
 def detect_faces_binary(binary_image, attributes=['DEFAULT'], region='us-west-2'):
     rekognition = boto3.client(
-        'rekognition',region_name=region,
-        aws_access_key_id=AWS_ID,
-        aws_secret_access_key=AWS_KEY)
+        'rekognition',
+        region_name=region,
+        # aws_access_key_id=AWS_ID,
+        # aws_secret_access_key=AWS_KEY
+    )
     img_json = {u'Bytes': binary_image}
     response = rekognition.detect_faces(
         Image=img_json,
