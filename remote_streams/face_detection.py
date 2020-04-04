@@ -54,6 +54,15 @@ def detect_faces(bucket, key, attributes=['ALL'], region="ap-southeast-2"):
     )
     return response['FaceDetails']
 
+def detect_faces_binary(binary_image, attributes=['DEFAULT'], region='us-west-2'):
+    rekognition = boto3.client('rekognition',region_name=region)
+    img_json = {u'Bytes': binary_image}
+    response = rekognition.detect_faces(
+        Image=img_json,
+        Attributes=attributes
+    )
+    return response['FaceDetails']
+
 def is_face(aws_face_details):
 
     if len(aws_face_details)==0:
@@ -77,6 +86,10 @@ def face_in_image(image):
     s3_key = time.strftime("test_for_face_%Y%m%d-%H%M%S_%f.jpg")
     upload_image(image, BUCKET, s3_key)
     aws_face_details = detect_faces(BUCKET, s3_key)
+    return is_face(aws_face_details)
+
+def face_in_binary_image(image):
+    aws_face_details = detect_faces_binary(image)
     return is_face(aws_face_details)
 
 def test():

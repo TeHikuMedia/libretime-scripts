@@ -54,8 +54,12 @@ STREAM_LINK = \
 FFMPEG_STREAM = \
     'ffmpeg -y -re -loglevel warning -i pipe:0 -c:v copy -c:a copy -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
 
-# FFMPEG_STREAM = \
-#     'ffmpeg -y -re -loglevel warning -i pipe:0 -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg -legacy_icecast 1 icecast://{ice_creds}@libreice.sunshine.tehiku.radio:8002/show'
+FFMPEG_STREAM = \
+    'ffmpeg -y -re -loglevel warning -i pipe:0 -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg -legacy_icecast 1 icecast://{ice_creds}@libreice.sunshine.tehiku.radio:8002/show'
+
+
+FFMPEG_STREAM = \
+    'ffmpeg -y -re -loglevel warning -i pipe:0 -vn -ab 128k -acodec libvorbis -content_type audio/ogg -f ogg -legacy_icecast 1 icecast://source:password@3.24.134.152:8001/master'
 
 
 
@@ -65,7 +69,7 @@ GOOGLE_API = \
 
 CHANNELS = (
     ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
-    ('DOC', 'UCNXXjM3fkppSxEQIwBloIvA'),
+    # ('DOC', 'UCNXXjM3fkppSxEQIwBloIvA'),
     ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow')
 )
 
@@ -278,10 +282,10 @@ def ingest_video(watch_id, queue):
     #     'ingesting': False})
 
     print(STREAM_LINK.format(watch_id=watch_id))
-    print(FFMPEG_STREAM)
+    print(FFMPEG_STREAM.format(ice_creds=CREDENTIALS['ice_creds']))
     p1 = Popen(STREAM_LINK.format(watch_id=watch_id).split(' '), stdout=PIPE, stderr=PIPE)
     p2 = Popen(
-        FFMPEG_STREAM.split(' '),
+        FFMPEG_STREAM.format(ice_creds=CREDENTIALS['ice_creds']).split(' '),
         stdin=PIPE,
         stderr=PIPE,
         stdout=PIPE)
