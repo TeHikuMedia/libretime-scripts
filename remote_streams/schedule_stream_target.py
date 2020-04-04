@@ -171,11 +171,12 @@ def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
 
     cmd = [
-        'ffmpeg', '-', '-re', '-loglevel', 'warning', '-i', src,
+        'ffmpeg', '-y', '-re', '-loglevel', 'warning', '-i', src,
         '-vf', 'select=\'not(mod(n\\,1))\',hue=s=0','-vframes', '1',
         '-f', 'image2', 'frame.jpg'
     ]
     print('Face detection started')
+    print(' '.join(cmd))
     try_detect = True
     if os.path.exists('frame.jpg'):
         Popen(['rm', 'frame.jpg'])
