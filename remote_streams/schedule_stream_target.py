@@ -38,7 +38,7 @@ START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:00:00', '%Y/%m/%
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Face Test'] #, 'Push to tehiku.radio', 'Sunshine Radio']
 SOURCE_STREAM_NAME = 'face_test'
-WAIT_STREAM_NAME = 'face_test_wait'
+DEFAULT_STREAM_TAKE = 'teaonews'
 DEST_STREAM_NAME = 'face_test_win_win'
 
 # Load Configuration
@@ -98,15 +98,15 @@ def wowza_get_targets():
     return data
 
 
-def toggle_stream_targets(queue, wowza_data, state, entries=ENTRIES):
+def toggle_stream_targets(queue, wowza_data, state, entries=ENTRIES, default_stream_source=None):
     for target in entries:
         for entry in wowza_data['mapEntries']:
             if target in entry['entryName']:
-                
                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + target
                 entry['enabled'] = state
+                if default_stream_source:
+                    entry['sourceStreamName'] = default_stream_source
                 wowza_put_data(RESOURCE, entry)
-
                 queue.put({'targets_enabled': state})
 
 # def enable_stream_targets(queue, wowza_data, entrie=ENTRIES):
@@ -200,14 +200,14 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
                 print("Start Stream")
                 queue.put({'start_stream': True})
                 state[1] = True
-                toggle_stream_targets(queue, wowza_data, True)
+                toggle_stream_targets(queue, wowza_data, False)
 
         elif end <= now:
             if state[1] and state[0]:
                 print("Stop Stream")
                 queue.put({'start_stream': False})
                 state = [False, False]
-                toggle_stream_targets(queue, wowza_data, False)
+                toggle_stream_targets(queue, wowza_data, False, default_stream_source=DEFAULT_STREAM_TAKE)
 
         time.sleep(1)
 
@@ -216,37 +216,41 @@ def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
 
     cmd = [
-        'ffmpeg', '-y', '-re', '-loglevel', 'warning', '-i', src,
-        '-vf', 'select=\'not(mod(n\\,1))\',hue=s=0','-vframes', '1',
+        'ffmpeg', '-y', '-loglevel', 'panic', '-i', src,
+        '-vframes', '1',
         '-f', 'image2', 'frame.jpg'
     ]
-    print('Face detection started')
-    print(' '.join(cmd))
-    try_detect = True
+    # print(' '.join(cmd))
+
     if os.path.exists('frame.jpg'):
         Popen(['rm', 'frame.jpg'])
-    while try_detect:
+
+    while True:
+        # print('face')
+        queue.put({'face_state': 'running',})
         process = Popen(cmd, stderr=PIPE, stdout=PIPE)
         o,e = process.communicate()
         try:
-            if not os.path.exists('frame.jpg'):
-                continue
             with open('frame.jpg', 'rb') as f:
                 data = f.read()
                 result = face_in_binary_image(data)
-                if result[0]:
-                    face_count = round(result[1]/100 - 50)
+                if result:
+                    face_count = round(result[1]/100 - 50)/50
                     queue.put({
                         'has_face': result[0],
                         'face_conf_msg': f'Face found {round(result[1])}% confidence',
-                        'face_count': 1
+                        'face_count': face_count,
+                        'face_state': 'running',
                     })
-                    try_detect = False
+
                 else:
                     queue.put({'has_face': False, })
+            Popen(['rm', 'frame.jpg'])
         except Exception as e:
-            queue.put({'has_face': False})
-            print(e)
+            queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
+            return
+            # print("ERROR:",e)
+        # sleep(1)
 
 
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
@@ -279,7 +283,7 @@ def main():
     # enable_targets = Process(target=enable_stream_targets, args=(q,data))
     stream_toggle = Process(target=stream_should_start, args=(q,))
     ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
-    has_face = Process(target=get_face, args=(q,))
+    # has_face = Process(target=get_face, args=(q,))
 
     messages = {
         'streaming': False,
@@ -290,7 +294,9 @@ def main():
         'error_message': '',
         'has_face': False,
         'face_conf_msg': '',
-        'face_starting': False,
+        'face_state': 'stopped',
+        'ffmpeg_state': 'stopped',
+        'targets_enabled': False,
     }
 
     stream_toggle.start()
@@ -299,7 +305,7 @@ def main():
     indi = '-/|\\-'
     count = 0
     is_streaming_count = 0
-
+    wowza_data = None
     while loop:
         sleep(0.1)
         if count >= 3:
@@ -335,30 +341,62 @@ def main():
             elif messages['ffmpeg_error']:
                 if ffmpeg_stream:
                     ffmpeg_stream.terminate()
+                
+                try:
+                    has_face.terminate()
+                except:
+                    pass
+                    
+                messages['has_face'] = False
+                messages['face_state'] = 'stopped'
                 messages['ffmpeg_error'] = False
                 messages['streaming'] = False
                 messages['ffmpeg_starting'] = False
+                
+
                 is_streaming_count = 0
+
                 ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
 
-            elif messages['start_stream'] and not messages['face_starting'] and not messages['ffmpeg_starting'] and not messages['has_face']:
-                # Start face detection
-                print("Start Face Detection")
-                has_face.start()
-                messages['face_starting'] = True    
+                if not wowza_data:
+                    wowza_data = wowza_get_targets()
+                if messages['targets_enabled']:
+                    toggle_stream_targets(q, wowza_data, False, default_stream_source=DEST_STREAM_NAME)
 
-            elif messages['start_stream'] and not messages['streaming'] and not messages['ffmpeg_starting'] and messages['has_face']:
-                # Scheduled start & Face detected
-                print("Start FFMPEG Encoding")
-                has_face.terminate()
-                messages['face_starting'] = False
-                messages['face_conf_msg'] = ''
+            elif messages['start_stream'] and not messages['streaming'] and not messages['ffmpeg_starting']:
+                # Scheduled start
+                # print("\rStart FFMPEG Encoding")
                 messages['ffmpeg_starting'] = True
                 if ffmpeg_stream:
                     ffmpeg_stream.start()
+                wowza_data = wowza_get_targets()
+
+
+            elif messages['start_stream'] and messages['streaming'] and messages['has_face'] and messages['face_state'] != 'done':
+                print("\r\nEnable stream target")
+                if messages['has_face']:
+                    messages['face_state'] = 'done'
+                    has_face.terminate()
+                if not wowza_data:
+                    wowza_data = wowza_get_targets()
+
+                toggle_stream_targets(q, wowza_data, True, default_stream_source=DEST_STREAM_NAME)
+                messages['face_starting'] = False
 
             else:
                 pass
+
+
+            if is_streaming_count > 5 and not messages['has_face'] and messages['face_state'] != 'running':
+                # Start face detection
+                has_face = Process(target=get_face, args=(q,))
+
+                print("Start Face Detection")
+                try:
+                    has_face.start()
+                    messages['face_state'] = 'starting'
+                except:
+                    print('face already started')
 
             sleep(.1)
 
@@ -370,10 +408,12 @@ def main():
                 # No messages
                 pass
 
+
+            STREAM_MSG = ''
             if messages['streaming'] and not messages['ffmpeg_error']:                
                 if is_streaming_count > 10:
-                    sys.stdout.flush()
-                    print(f'{bcolors.OKGREEN}\rFFMPEG Streaming {indi[count]}{bcolors.ENDC}', end='', flush=True)
+                    STREAM_MSG = f'{bcolors.OKGREEN}FFMPEG Streaming {indi[count]}{bcolors.ENDC}'
+
                 elif is_streaming_count == 10:
                     print(flush=True)
                     is_streaming_count = is_streaming_count + 1
@@ -381,11 +421,24 @@ def main():
                     is_streaming_count = is_streaming_count + 1
 
             if is_streaming_count < 10 and messages['start_stream']:
-                print(
-                    f"{bcolors.WARNING}\rFFMPEG Starting {indi[count]}{bcolors.ENDC} \
-{bcolors.FAIL}{messages['error_message']}{bcolors.ENDC}\
-{bcolors.OKBLUE}{bcolors.BOLD}{messages['face_conf_msg']}{bcolors.ENDC}{bcolors.ENDC}", end='', flush=True)
+                STREAM_MSG = f'{bcolors.WARNING}FFMPEG Starting  {indi[count]}{bcolors.ENDC}'
+
+
+            emsg = messages['error_message']
+            if emsg:
                 messages['error_message'] = ''
+
+            fmsg = messages['face_conf_msg']
+            if fmsg:
+                messages['face_conf_msg'] = ''
+
+            sys.stdout.flush()
+            print(
+                f"\r{STREAM_MSG}\
+{bcolors.FAIL}{emsg}{bcolors.ENDC}\
+{bcolors.OKBLUE}{bcolors.BOLD}{fmsg}{bcolors.ENDC}{bcolors.ENDC}", end='', flush=True)
+                
+
 
         except KeyboardInterrupt as e:
             print("\nCaught KeyboardInterrupt, terminating workers")
