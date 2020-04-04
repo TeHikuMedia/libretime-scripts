@@ -37,8 +37,9 @@ HEADERS ={
 START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:00:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
 
-SOURCE_STREAM_NAME = 'test2'
-DEST_STREAM_NAME = 'teaonews_mono_test'
+SOURCE_STREAM_NAME = 'face_test'
+WAIT_STREAM_NAME = 'face_test_wait'
+DEST_STREAM_NAME = 'face_test_win_win'
 
 # Load Configuration
 try:
@@ -111,7 +112,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
     start = start_time.hour*60*60 + start_time.minute*60 + start_time.second
     end   = end_time.hour*60*60   + end_time.minute*60   + end_time.second
 
-    entries = ['Push to tehiku.radio', 'Sunshine Radio']
+    entries = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio']
     ENABLED = False
     while not ENABLED:
         # Get list of stream targets
@@ -137,7 +138,7 @@ def toggle_stream_targets(queue, start_time=START_TIME, end_time=END_TIME):
                                 RESOURCE = "applications/rtmp/pushpublish/mapentries/" + entry['entryName']
                                 wowza_put_data(RESOURCE, st)
                         elif start <= now and end >= now:
-                            if not st['enabled']:
+                            if not st['enabled'] or st['sourceStreamName'] != DEST_STREAM_NAME:
                                 print("\nEnabling stream targets")
                                 st['enabled'] = True
                                 st['sourceStreamName'] = DEST_STREAM_NAME
@@ -190,7 +191,12 @@ def get_face(queue):
                 data = f.read()
                 result = face_in_binary_image(data)
                 if result[0]:
-                    queue.put({'has_face': result[0], 'face_conf_msg': f'Face found {round(result[1])}% confidence'})
+                    face_count = round(result[1]/100 - 50)
+                    queue.put({
+                        'has_face': result[0],
+                        'face_conf_msg': f'Face found {round(result[1])}% confidence',
+                        'face_count': 1
+                    })
                     try_detect = False
                 else:
                     queue.put({'has_face': False, })
