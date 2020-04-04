@@ -10,7 +10,7 @@ import sys
 from time import sleep
 from remote_streams.settings import CONF_FILE
 import pytz
-
+import tempfile as tf
 timezone = pytz.timezone("Pacific/Auckland")
 
 from remote_streams.face_detection import face_in_binary_image
@@ -214,16 +214,16 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
 
 def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
-
+    tmp_file = tf.NamedTemporaryFile(delete=True, suffix='.jpg')
     cmd = [
         'ffmpeg', '-y', '-loglevel', 'panic', '-i', src,
         '-vframes', '1',
-        '-f', 'image2', 'frame.jpg'
+        '-f', 'image2', tmp_file.name
     ]
     # print(' '.join(cmd))
 
-    if os.path.exists('frame.jpg'):
-        Popen(['rm', 'frame.jpg'])
+    if os.path.exists(tmp_file.name):
+        Popen(['rm', tmp_file.name])
 
     while True:
         # print('face')
@@ -231,7 +231,7 @@ def get_face(queue):
         process = Popen(cmd, stderr=PIPE, stdout=PIPE)
         o,e = process.communicate()
         try:
-            with open('frame.jpg', 'rb') as f:
+            with open(tmp_file.name, 'rb') as f:
                 data = f.read()
                 result = face_in_binary_image(data)
                 if result:
@@ -245,7 +245,7 @@ def get_face(queue):
 
                 else:
                     queue.put({'has_face': False, })
-            Popen(['rm', 'frame.jpg'])
+            Popen(['rm', tmp_file.name])
         except Exception as e:
             queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
             return
