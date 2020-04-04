@@ -196,7 +196,7 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
     cmd = [
         'ffmpeg', '-re', '-loglevel', 'warning', '-i', src,
         '-c:v', 'copy',
-        '-c:a', 'aac', '-ac', '1', '-ar', '44100',
+        '-c:a', 'aac', '-ac', '1', '-ar', '44100', '-af', 'loudnorm=I=-23:TP=-1',
         '-f', 'flv', dst,
     ]
 
