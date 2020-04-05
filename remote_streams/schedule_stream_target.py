@@ -41,12 +41,12 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 13:00:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:58:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:00:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Face Test',]# 'Push to tehiku.radio', 'Sunshine Radio']
+ENTRIES = ['Face Test',]# 'Push to tehiku.radio', 'Sunshine Radio', ]
 SOURCE_STREAM_NAME = 'face_test'
 DEFAULT_STREAM_TAKE = 'teaonews'
-DEST_STREAM_NAME = 'teaonews_auto_test'
+DEST_STREAM_NAME = 'teaonews_auto'
 
 # Load Configuration
 try:
@@ -183,9 +183,9 @@ def get_face(queue):
                 data = f.read()
                 result = face_in_binary_image(data)
                 if result:
-                    if result[1] > 50:
+                    if result[0]:
                         face_count = 1
-                    elif result[1]>= 10:
+                    elif result[1] >= 10 and result[1]<= 90:
                         face_count = -1
                     else:
                         face_count = 0
