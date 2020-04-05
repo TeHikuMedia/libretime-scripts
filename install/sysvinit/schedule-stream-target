@@ -32,7 +32,7 @@ PIDFILE=/var/run/$NAME.pid
 
 start () {
         start-stop-daemon --start --background --quiet --chuid $USERID:$GROUPID \
-            --make-pidfile --pidfile $PIDFILE --startas $DAEMON
+            --make-pidfile --pidfile $PIDFILE --startas $DAEMON -d
 }
 
 stop () {
