@@ -166,7 +166,7 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
 
 def get_thumb_url():
     # Generate random size so we don't cache.
-    width = 2000.0 + randrange(0,500,1)
+    width = 400.0 + randrange(0,500,1)
     height = width * 9 / 16
     image_size = f'{(width):0.0f}x{(height):0.0f}'
     return \
@@ -175,11 +175,6 @@ def get_thumb_url():
 def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
     tmp_file = tf.NamedTemporaryFile(delete=True, suffix='.jpg')
-    cmd = [
-        'ffmpeg', '-y', '-loglevel', 'panic', '-i', src,
-        '-vframes', '1',
-        '-f', 'image2', tmp_file.name
-    ]
 
     if os.path.exists(tmp_file.name):
         Popen(['rm', tmp_file.name])
