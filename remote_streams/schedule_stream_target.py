@@ -36,14 +36,17 @@ class bcolors:
 BASEURL = "https://rtmp.tehiku.live:8087/v2/servers/_defaultServer_/vhosts/_defaultVHost_/"
 RESOURCE = "applications/rtmp/adv"
 
+CHECK_STREAM_AVAILABLE = 'applications/{app_name}/instances/_definst_/incomingstreams/{stream_name}/monitoring/current'
+
 HEADERS ={
     'Accept': 'application/json; charset=utf-8' ,
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:58:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:55:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:00:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
+WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'teaonews'
 DEFAULT_STREAM_TAKE = 'teaonews'
 DEST_STREAM_NAME = 'teaonews_auto'
@@ -64,6 +67,11 @@ except Exception as e:
     print('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
 
+def stream_exists(app_name, stream_name):
+    url = os.path.join(BASEURL, CHECK_STREAM_AVAILABLE.format(app_name=app_name, stream_name=stream_name))
+    r = requests.get(url, auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS,)
+    res = r.json()
+    return (res['uptime'] > 1)
 
 def wowza_put_data(resource, data):
     r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
@@ -220,8 +228,15 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
         '-f', 'flv', dst,
     ]
 
+    # Check the stream exists:
+    print("Waiting for stream")
+    while not stream_exists(WOWZA_APP_NAME, SOURCE_STREAM_NAME):
+        sleep(10)
+    print("Stream exists")
+
     process = Popen(cmd, stderr=PIPE, stdout=PIPE)
     queue.put({"streaming": True, "ffmpeg_starting": False})
+    print("Streaming")
     for line in process.stdout:
         sys.stdout.write(line)
     e = process.stderr.read()
@@ -261,7 +276,7 @@ def main():
     is_streaming_count = 0
     wowza_data = None
     face_count = 0
-
+    stream_count_threshold = 10
     while loop:
         sleep(.1)
         if count >= 3:
@@ -311,13 +326,14 @@ def main():
 
                 is_streaming_count = 0
 
+                sleep(2)
                 ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
 
                 if not wowza_data:
                     wowza_data = wowza_get_targets()
                 if messages['targets_enabled']:
                     toggle_stream_targets(q, wowza_data, False, default_stream_source=DEST_STREAM_NAME)
-
+                
             elif messages['start_stream'] and not messages['streaming'] and not messages['ffmpeg_starting']:
                 # Scheduled start
                 messages['ffmpeg_starting'] = True
@@ -343,7 +359,7 @@ def main():
                 pass
 
 
-            if is_streaming_count > 5 and not messages['has_face'] and messages['face_state'] != 'running':
+            if is_streaming_count > stream_count_threshold and not messages['has_face'] and messages['face_state'] != 'running':
                 # Start face detection
                 has_face = Process(target=get_face, args=(q,))
                 face_count = 0
@@ -365,15 +381,15 @@ def main():
 
             STREAM_MSG = ''
             if messages['streaming'] and not messages['ffmpeg_error']:                
-                if is_streaming_count > 10:
+                if is_streaming_count > stream_count_threshold:
                     STREAM_MSG = f'{bcolors.OKGREEN}FFMPEG Streaming {indi[count]}{bcolors.ENDC}'
 
-                elif is_streaming_count == 10:
+                elif is_streaming_count == stream_count_threshold:
                     is_streaming_count = is_streaming_count + 1
                 else:
                     is_streaming_count = is_streaming_count + 1
 
-            if is_streaming_count < 10 and messages['start_stream']:
+            if is_streaming_count < stream_count_threshold and messages['start_stream']:
                 STREAM_MSG = f'{bcolors.WARNING}FFMPEG Starting  {indi[count]}{bcolors.ENDC}'
 
 
