@@ -77,11 +77,12 @@ def stream_exists(app_name, stream_name):
         return False
 
 def wowza_put_data(resource, data):
-    r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
-    res = r.json()
-    print("Result: {0}".format(res))
-    # if not res['success']:
-        # print(data)
+    try:
+        r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
+        res = r.json()
+        print("Result: {0}".format(res))
+    except:
+        print("Error putting data...")
 
 def wowza_get_targets():
     success = False
@@ -251,10 +252,8 @@ def main():
     
     q = Queue()
 
-    # enable_targets = Process(target=enable_stream_targets, args=(q,data))
     stream_toggle = Process(target=stream_should_start, args=(q,))
     ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
-    # has_face = Process(target=get_face, args=(q,))
 
     messages = {
         'streaming': False,
