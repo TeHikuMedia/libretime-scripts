@@ -102,7 +102,7 @@ def wowza_get_targets():
             success = False
         
         if not success:
-            sleep(1)
+            sleep(15)
 
     return data
 
@@ -162,10 +162,9 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
 
 def get_thumb_url():
     # Generate random size so we don't cache.
-    width = 1920
-    height = 1080
-    scale = randrange(1,25,1)/100+1
-    image_size = f'{(scale*width):0.0f}x{(scale*height):0.0f}'
+    width = 2000.0 + randrange(0,500,1)
+    height = width * 9 / 16
+    image_size = f'{(width):0.0f}x{(height):0.0f}'
     return \
         f'http://rtmp.tehiku.live:8086/thumbnail?application=rtmp&streamname={SOURCE_STREAM_NAME}&size={image_size}'
 
@@ -204,9 +203,9 @@ def get_face(queue):
                         'face_state': 'running',
                     })
                     if result[1] < 10:
-                        sleep(0.5)
+                        sleep(0.1)
                 else:
-                    sleep(1)
+                    sleep(.2)
                     queue.put({'has_face': False, })
             Popen(['rm', tmp_file.name])
             
@@ -276,6 +275,7 @@ def main():
     is_streaming_count = 0
     wowza_data = None
     face_count = 0
+    face_count_threshold = 2
     stream_count_threshold = 10
     while loop:
         sleep(.1)
@@ -344,7 +344,7 @@ def main():
 
             elif messages['start_stream'] and messages['streaming'] and messages['has_face'] and messages['face_state'] != 'done':
                 
-                if face_count > 2:
+                if face_count > face_count_threshold:
                     print("Enable stream target")
                     if messages['has_face']:
                         messages['face_state'] = 'done'
