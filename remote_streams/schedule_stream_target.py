@@ -68,10 +68,13 @@ except Exception as e:
     raise
 
 def stream_exists(app_name, stream_name):
-    url = os.path.join(BASEURL, CHECK_STREAM_AVAILABLE.format(app_name=app_name, stream_name=stream_name))
-    r = requests.get(url, auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS,)
-    res = r.json()
-    return (res['uptime'] > 1)
+    try:
+        url = os.path.join(BASEURL, CHECK_STREAM_AVAILABLE.format(app_name=app_name, stream_name=stream_name))
+        r = requests.get(url, auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS,)
+        res = r.json()
+        return (res['uptime'] > 1)
+    except:
+        return False
 
 def wowza_put_data(resource, data):
     r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
