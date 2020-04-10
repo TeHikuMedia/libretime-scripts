@@ -40,7 +40,7 @@ def call_webhooks(queue, message, hooks=['Kingi', 'Slack Automation Channel']):
             }
         else:
             payload = {
-                "text": message
+                "text": message,
                 "listen": "https://tehiku.nz/te-hiku-radio/",
                 "watch": "https://tehiku.nz/c.B3",
             }
