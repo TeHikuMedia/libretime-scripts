@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 from setuptools.config import read_configuration
-
+import stat
 import os
 from subprocess import call
 
@@ -28,8 +28,10 @@ LOG_FILE = os.path.join(LOG_DIR, 'update_metadata.log')
 # Make sure log directory exists
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
+    os.chmod(LOG_DIR, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 if not os.path.exists(LOG_FILE):
     open(LOG_FILE, 'a').close()
+    os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
 conf_dict = read_configuration("setup.cfg")
 
@@ -49,7 +51,7 @@ setup(
         'boto3',
         'pyyaml',
         'requests',
-        'pytz'
+        'pytz',
     ],
     entry_points={
         "console_scripts": [
@@ -71,4 +73,5 @@ for file in conf_dict['options']['data_files']:
             file_name = name.split('/')[-1]
             file_path = os.path.join(path, file_name)
             print('Modifying {0}'.format(file_path))
-            call(['chmod', '644', file_path])
+            # call(['chmod', '644', file_path])
+            os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
