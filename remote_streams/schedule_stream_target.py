@@ -13,7 +13,7 @@ from remote_streams.settings import CONF_FILE
 from random import randrange
 import argparse
 from remote_streams.face_detection import face_in_binary_image
-from notify import call_webhooks
+from remote_streams.notify import call_webhooks
 import pytz
 import tempfile as tf
 import logging
