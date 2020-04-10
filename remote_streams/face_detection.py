@@ -13,6 +13,7 @@ try:
     
     AWS_ID = d['aws']['access_key_face']
     AWS_KEY = d['aws']['secret_key_face']
+    FACE_FILE = d['classifiers']['face']
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
@@ -83,20 +84,22 @@ def detect_faces_binary(binary_image, attributes=['DEFAULT'], region='us-west-2'
         Image=img_json,
         Attributes=attributes
     )
+
     return response['FaceDetails']
 
 def is_face(aws_face_details):
 
     if len(aws_face_details)==0:
-        return False, 0
+        return False, 0, 0
 
     max_face = max(aws_face_details, key=lambda face: face['Confidence'])
-    return max_face['Confidence'] > 90, max_face['Confidence']
+    return (max_face['Confidence'] > 90) and (max_face['Quality']['Brightness'] > 42), max_face['Confidence'], max_face['Quality']['Brightness']
 
     # for face in aws_face_details:
     #   bounding_box = face['BoundingBox']
     #   print("{}-{} ({})".format(bounding_box['Width'], bounding_box['Height'], face['Confidence']))
     #   if bounding_box['Width'] > .02 and  bounding_box['Height'] > .02:
+
 
 def face_in_file(file_like):
     s3_key = time.strftime("test_for_face_%Y%m%d-%H%M%S_%f.jpg")
@@ -115,12 +118,15 @@ def face_in_binary_image(image):
     return is_face(aws_face_details)
 
 def test():
-    for file_name in ["jacinda.jpg", "no_face.jpg", "yes_face.jpg", "press_conference.jpg"]:
+    for file_name in ["jacinda.jpg", "no_face.jpg", "yes_face.jpg", "press_conference.jpg", "audience_dont_detect.jpg", "conference_should_detect.jpg"]:
         file_path = "data/{}".format(file_name)
         yesnoface, confidence = face_in_file(file_path)
         print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
 
         yesnoface, confidence = face_in_binary_image(open(file_path,'rb').read())
+        print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
+
+        yesnoface, confidence = detect_face_opencv(file_path)
         print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
 
 
