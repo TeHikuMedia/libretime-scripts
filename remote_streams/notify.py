@@ -41,8 +41,8 @@ def call_webhooks(queue, message, hooks=['Kingi', 'Slack Automation Channel']):
         else:
             payload = {
                 "text": message
-                "listen": "https://tehiku.nz/te-hiku-radio/"
-                "watch": "https://tehiku.nz/c.B3"
+                "listen": "https://tehiku.nz/te-hiku-radio/",
+                "watch": "https://tehiku.nz/c.B3",
             }
 
         r = requests.post(url, headers=HEADERS, data=json.dumps(payload))
