@@ -2,6 +2,7 @@ from multiprocessing import Process, Pool, Queue, Manager
 import requests
 from requests.auth import HTTPDigestAuth
 import os
+import stat
 from datetime import datetime
 import time
 import json
@@ -12,15 +13,21 @@ from remote_streams.settings import CONF_FILE
 from random import randrange
 import argparse
 from remote_streams.face_detection import face_in_binary_image
-
+from notify import call_webhooks
 import pytz
 import tempfile as tf
+import logging
 
 timezone = pytz.timezone("Pacific/Auckland")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--daemon", help="Daemonize. Don't print.", action="store_true")
 args = parser.parse_args()
+
+
+
+
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -43,13 +50,13 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:55:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 11:55:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:00:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
+ENTRIES = ['Face Test', ]#'Push to tehiku.radio', 'Sunshine Radio', ]
 WOWZA_APP_NAME = 'rtmp'
-SOURCE_STREAM_NAME = 'teaonews'
+SOURCE_STREAM_NAME = 'face_test'
 DEFAULT_STREAM_TAKE = 'teaonews'
-DEST_STREAM_NAME = 'teaonews_auto'
+DEST_STREAM_NAME = 'teaonews_auto_test'
 
 # Load Configuration
 try:
@@ -60,12 +67,33 @@ try:
     PASSWORD = d['wowza']['password']
     AWS_KEY = d['aws']['access_key_face']
     AWS_ID = d['aws']['secret_key_face']
+
+    LOGDIR = d['log_path']
+    LOG_FILE = os.path.join(LOGDIR, 'face_detect.log')
+    if not os.path.exists(LOG_FILE):
+        open(LOG_FILE, 'a').close()
+        os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
 except Exception as e:
     print('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
+
+
+try:
+    logging.basicConfig(format='%(asctime)s: %(message)s',filename=LOG_FILE,level=logging.DEBUG)
+except:
+    pass
+
+
+def log(message, level=logging.DEBUG):
+    try:
+        logging.debug(message)
+    except:
+        pass
+
 
 def stream_exists(app_name, stream_name):
     try:
@@ -191,16 +219,16 @@ def get_face(queue):
                 if result:
                     if result[0]:
                         face_count = 1
-                    elif result[1] >= 10 and result[1]<= 90:
-                        face_count = -1
+                        logging.debug(f'Face {result[1]}% conf {result[2]}% bright')
                     else:
                         face_count = 0
                     queue.put({
                         'has_face': result[0],
-                        'face_conf_msg': f'Face found {result[1]:0.2f}% confidence.',
+                        'face_conf_msg': f'Face found {result[1]:0.2f}% confidence {result[2]:0.2f}% brightness.',
                         'face_count': face_count,
                         'face_state': 'running',
                     })
+
                     if result[1] < 10:
                         sleep(0.1)
                 else:
@@ -209,6 +237,7 @@ def get_face(queue):
             Popen(['rm', tmp_file.name])
             
         except Exception as e:
+            logging.error(e)
             queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
             return
 
@@ -222,7 +251,7 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
     cmd = [
         'ffmpeg', '-re', '-loglevel', 'warning', '-i', src,
         '-c:v', 'copy',
-        '-c:a', 'aac', '-ac', '1', '-ar', '44100', '-af', 'loudnorm=I=-23:TP=-1',
+        '-c:a', 'aac', '-ac', '1', '-ar', '44100', '-af', 'loudnorm=I=-16:TP=-1',
         '-f', 'flv', dst,
     ]
 
@@ -352,6 +381,12 @@ def main():
                     toggle_stream_targets(q, wowza_data, True, default_stream_source=DEST_STREAM_NAME)
                     messages['face_starting'] = False
 
+                    notify = Process(target=call_webhooks, args=(q,"Face Threshold Met", ['Slack Automation Channel']))
+                    notify.start()
+
+                    notify = Process(target=call_webhooks, args=(q,"Stream Targets LIVE"))
+                    notify.start()
+
             else:
                 pass
 
@@ -367,6 +402,9 @@ def main():
                     messages['face_state'] = 'starting'
                 except:
                     pass
+
+                notify = Process(target=call_webhooks, args=(q,"Start Face Detection", ['Slack Automation Channel']))
+                notify.start()
 
             if 'face_count' in messages.keys():
                 new_face_count = face_count + messages['face_count']
