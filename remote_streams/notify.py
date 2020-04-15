@@ -1,6 +1,10 @@
 import requests
 import json
 from remote_streams.settings import CONF_FILE
+from datetime import datetime
+import pytz
+
+timezone = pytz.timezone("Pacific/Auckland")
 
 
 # Load Configuration
@@ -25,16 +29,26 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-def call_webhooks(queue, message, hooks=['Kingi', 'Slack Automation Channel']):
+def call_webhooks(queue, message, hooks=['Slack Automation Channel', 'Kingi' ]):
 
     for hook in WEBHOOKS:
         name = hook['name']
+
+        NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
+        NOW = NOW.astimezone(timezone)
+
+
+        slack_time_string = "<!date^%s^[{date_num} {time_secs}]|[%s NZT]>" % (NOW.strftime('%s'), NOW.strftime('%Y-%m-%d %H:%M:%S'))
 
         if name not in hooks:
             continue
 
         url = hook['url']
         if 'slack' in hook['type']:
+            if 'live' in message.lower():
+                message = f"```{slack_time_string} {message}\nWATCH:  https://tehiku.nz/c.B3\nLISTEN: http://tehiku.radio```"
+            else:
+                message = f"```{slack_time_string} {message}```"
             payload = {
                 "text": message
             }
@@ -50,4 +64,4 @@ def call_webhooks(queue, message, hooks=['Kingi', 'Slack Automation Channel']):
         print(r.content)
 
 if __name__ == "__main__":
-    call_webhooks(None,'test')
+    call_webhooks(None,'Test ')
