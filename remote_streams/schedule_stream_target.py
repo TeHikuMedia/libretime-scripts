@@ -50,7 +50,7 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:55:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 11:00:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
 WOWZA_APP_NAME = 'rtmp'
