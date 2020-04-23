@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE, check_output
 from pwd import getpwnam  
 from grp import getgrnam
 import os
+import boto3
 
 from radio_database_sync.settings import CONF_FILE
 
@@ -73,6 +74,15 @@ def backup():
     p3 = Popen(['tee', tmp_file], stdin=p2.stdout, stdout=PIPE)
     p2.stdout.close()
     output, error = p3.communicate()
+
+    s3_client = boto3.client('s3', region_name='ap-southeast-2', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
+    object_name = os.path.join(SLUG, file_name)
+    try:
+        response = s3_client.upload_file(tmp_file, S3_BUCKET, object_name)
+    except Exception as e:
+        print(e)
+        
+
     output = check_output([
         's3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, file_name),
         '--region', 'ap-southeast-2',
@@ -81,12 +91,19 @@ def backup():
     print(output)
 
     # Also save name as "latest" for restoring purposes
-    output = check_output([
-        's3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, 'libretime-backup-latest.gz'),
-        '--region', 'ap-southeast-2',
-        '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
-    ])
-    print(output)
+    object_name = os.path.join(SLUG, 'libretime-backup-latest.gz')
+    try:
+        response = s3_client.upload_file(tmp_file, S3_BUCKET, object_name)
+    except Exception as e:
+        print(e)
+
+    # output = check_output([
+    #     's3cmd', 'sync', tmp_file, os.path.join(S3_BUCKET, SLUG, 'libretime-backup-latest.gz'),
+    #     '--region', 'ap-southeast-2',
+    #     '--access_key', AWS_ACCESS_KEY, '--secret_key', AWS_SECRET_KEY
+    # ])
+    # print(output)
+
     if not error:
         return True
     else:
