@@ -1,3 +1,2 @@
 # Cron job to backup database to s3
-15 0 * * *	root	/usr/local/bin/radio-db-actions -b > /tmp/cron.db.log 2>&1
-0 13 * * *	root	/usr/local/bin/radio-db-actions -b > /tmp/cron.db.log 2>&1
+42 * * * *	root	/usr/local/bin/radio-db-actions -b > /tmp/cron.db.log 2>&1

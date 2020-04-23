@@ -68,7 +68,7 @@ def backup():
     time = datetime.now()
     time = time.astimezone(timezone)
     prepare_dir(TMP_DIR)
-    file_name = 'libretime-backup-{0}.gz'.format(time.strftime('%a').upper())
+    file_name = 'libretime-backup-{0}.gz'.format(time.strftime('%a-%H').upper())
     tmp_file = os.path.join(TMP_DIR, file_name)
     p1 = Popen(['pg_dumpall'], stdout=PIPE)
     p2 = Popen(['gzip', '-cf'], stdin=p1.stdout, stdout=PIPE)
