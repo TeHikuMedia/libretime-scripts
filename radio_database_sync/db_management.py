@@ -1,5 +1,5 @@
 import json
-import logging
+# import logging
 import argparse
 import sys
 from datetime import datetime
@@ -25,9 +25,10 @@ try:
     d = json.loads(f.read())
     f.close()
     ROOT_FOLDERS = d['search_folders']
-    LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
-    if not os.path.exists(LOGFILE):
-        Popen(['touch', LOGFILE])
+    # LOGFILE = os.path.join(d['log_path'], 'db.mgmt.log')
+    # if not os.path.exists(LOGFILE):
+    #     Popen(['touch', LOGFILE])
+
     TMP_DIR = d['tmp_dir']
     S3_BUCKET = d['aws']['s3_bucket']
     AWS_ACCESS_KEY = d['aws']['access_key']
@@ -40,11 +41,11 @@ except Exception as e:
     print('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
 
-logging.basicConfig(
-    format='%(asctime)s [%(levelname)s]: %(message)s',
-    level=logging.INFO,
-    filename=LOGFILE,
-)
+# logging.basicConfig(
+#     format='%(asctime)s [%(levelname)s]: %(message)s',
+#     level=logging.INFO,
+#     filename=LOGFILE,
+# )
 
 timezone = pytz.timezone("Pacific/Auckland")
 
