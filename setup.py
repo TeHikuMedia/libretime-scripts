@@ -2,6 +2,8 @@ from setuptools import setup, find_packages
 from setuptools.config import read_configuration
 import stat
 import os
+import pwd
+import grp
 from subprocess import call
 
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +31,10 @@ LOG_FILE = os.path.join(LOG_DIR, 'update_metadata.log')
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
     os.chmod(LOG_DIR, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+    uid = pwd.getpwnam("www-data").pw_uid
+    gid = grp.getgrnam("www-data").gr_gid
+    os.chown(LOG_DIR, uid, gid)
+
 if not os.path.exists(LOG_FILE):
     open(LOG_FILE, 'a').close()
     os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
