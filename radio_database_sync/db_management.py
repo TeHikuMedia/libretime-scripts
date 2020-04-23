@@ -32,6 +32,8 @@ try:
 
     TMP_DIR = d['tmp_dir']
     S3_BUCKET = d['aws']['s3_bucket']
+    S3_BUCKET = S3_BUCKET.replace('s3://','')
+    S3_BUCKET = S3_BUCKET.replace('/','')
     AWS_ACCESS_KEY = d['aws']['access_key']
     AWS_SECRET_KEY = d['aws']['secret_key']
     SLUG = d['project_slug']
