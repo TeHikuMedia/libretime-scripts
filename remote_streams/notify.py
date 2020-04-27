@@ -35,10 +35,10 @@ def call_webhooks(queue, message, hooks=['Slack Automation Channel', 'Kingi' ]):
         name = hook['name']
 
         NOW = datetime.utcnow().replace(tzinfo=pytz.utc)
-        NOW = NOW.astimezone(timezone)
+        NOW_NZ = NOW.astimezone(timezone)
 
 
-        slack_time_string = "<!date^%s^[{date_num} {time_secs}]|[%s NZT]>" % (NOW.strftime('%s'), NOW.strftime('%Y-%m-%d %H:%M:%S'))
+        slack_time_string = "<!date^%s^[{date_num} {time_secs}]|[%s NZT]>" % (NOW.strftime('%s'), NOW_NZ.strftime('%Y-%m-%d %H:%M:%S'))
 
         if name not in hooks:
             continue
