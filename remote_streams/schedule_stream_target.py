@@ -25,10 +25,6 @@ parser.add_argument("-d", "--daemon", help="Daemonize. Don't print.", action="st
 args = parser.parse_args()
 
 
-
-
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -50,8 +46,8 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 11:00:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:30:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:57:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime('2020/03/02 16:00:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
 WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'teaonews'
@@ -136,6 +132,7 @@ def wowza_get_targets():
         if not success:
             sleep(15)
 
+    call_webhooks(None,"Wowza Server running")
     return data
 
 
@@ -172,7 +169,7 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
         if start > now:
             if not state[0]:
                 print("Stop Stream")
-                state[0] = True
+                state[0] = [True, False]
                 queue.put({'start_stream': False})
                 toggle_stream_targets(queue, wowza_data, False)
 
@@ -180,7 +177,7 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
             if not state[1]:
                 print("Start Stream")
                 queue.put({'start_stream': True})
-                state[1] = True
+                state = [True, True]
                 toggle_stream_targets(queue, wowza_data, False)
 
         elif end <= now:
@@ -294,6 +291,8 @@ def main():
     }
 
     stream_toggle.start()
+    notify = Process(target=call_webhooks, args=(q,"Scheduled Stream Start process running"))
+    notify.start()
 
     loop = True
     indi = '-/|\\-'
@@ -365,6 +364,8 @@ def main():
                 messages['ffmpeg_starting'] = True
                 if ffmpeg_stream:
                     ffmpeg_stream.start()
+                    notify = Process(target=call_webhooks, args=(q,"FFMPEG process started"))
+                    notify.start()
                 wowza_data = wowza_get_targets()
 
 
@@ -443,6 +444,18 @@ def main():
 {bcolors.FAIL}{emsg}{bcolors.ENDC}\
 {bcolors.OKBLUE}{bcolors.BOLD}{fmsg}{bcolors.ENDC}{bcolors.ENDC}", end='', flush=True)
 
+
+            if not stream_toggle.is_alive():
+                notify = Process(target=call_webhooks, args=(q,"Stream Toggle process died"))
+                notify.start()
+                stream_toggle = Process(target=stream_should_start, args=(q,))
+                stream_toggle.start()
+                notify = Process(target=call_webhooks, args=(q,"Scheduled Stream Start process running"))
+                notify.start()
+
+            if not ffmpeg_stream.is_alive() and messages['ffmpeg_starting']:
+                notify = Process(target=call_webhooks, args=(q,"FFMPEG process died"))
+                notify.start()
 
         except KeyboardInterrupt as e:
             print("\nCaught KeyboardInterrupt, terminating workers")
