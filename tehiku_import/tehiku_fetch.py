@@ -11,6 +11,7 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import sys
+from tempfile import NamedTemporaryFile
 
 from tehiku_import.import_functions import scale_media
 from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD
@@ -78,7 +79,7 @@ def get_root_dir():
 
 
 def get_item_from_collection(
-        collection, num_items=20, expire=7, ampm=False, daily=False,
+        collection, num_items=40, expire=7, ampm=False, daily=False,
         label='', duration=None, delete=False):
     
     ROOT_DIR = get_root_dir()
@@ -177,7 +178,10 @@ def get_item_from_collection(
                 DOWNLOAD = True
 
         if DOWNLOAD:
-            cmd = ['curl', '-s', '-L', file_url, '-o', file_path]
+            ntf = NamedTemporaryFile(delete=False, suffix=f'.{extension}')
+            tmp_file = ntf.name
+
+            cmd = ['curl', '-s', '-L', file_url, '-o', tmp_file]
             p = Popen(cmd, stdin=PIPE, stdout=PIPE)
             output, error = p.communicate()
             if error:
@@ -185,17 +189,17 @@ def get_item_from_collection(
 
             if extension not in 'flac mp3':
                 # Convert to mp3
-                file_path = convert_audio(file_path)
+                tmp_file = convert_audio(tmp_file)
 
             if duration:
-                scale_media(file_path, duration)
+                scale_media(tmp_file, duration)
 
-            p = Popen(['chown', 'www-data', file_path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chgrp', 'www-data', file_path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
-            fd = mutagen.File(file_path, easy=True)
+            fd = mutagen.File(tmp_file, easy=True)
 
             try:
                 fd.tags['DATE'] = publish_date.strftime('%Y')
@@ -218,7 +222,10 @@ def get_item_from_collection(
 
             # Try to embed picture
             # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
-            add_artwork(publication['image_thumb_small'], file_path)
+            add_artwork(publication['image_thumb_small'], tmp_file)
+
+            # Finally move the file to where it needs to be
+            Popen(['mv', tmp_file, file_path])
             
 
 def main():
@@ -226,7 +233,7 @@ def main():
     if args.get_n_items:
         NUM_GET = int(args.get_n_items)
     else:
-        NUM_GET = 20
+        NUM_GET = 40
 
     if args.remove_after_days:
         EXPIRE = int(args.remove_after_days)
