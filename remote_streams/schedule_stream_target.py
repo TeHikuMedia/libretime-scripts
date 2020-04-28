@@ -48,11 +48,11 @@ HEADERS ={
 
 START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:57:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/03/02 16:00:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
+ENTRIES = ['Face Test',] #'Push to tehiku.radio', 'Sunshine Radio', ]
 WOWZA_APP_NAME = 'rtmp'
-SOURCE_STREAM_NAME = 'teaonews'
+SOURCE_STREAM_NAME = 'teaonews_test'
 DEFAULT_STREAM_TAKE = 'teaonews'
-DEST_STREAM_NAME = 'teaonews_auto'
+DEST_STREAM_NAME = 'teaonews_auto_test'
 
 # Load Configuration
 try:
