@@ -120,14 +120,14 @@ def face_in_binary_image(image):
 def test():
     for file_name in ["jacinda.jpg", "no_face.jpg", "yes_face.jpg", "press_conference.jpg", "audience_dont_detect.jpg", "conference_should_detect.jpg"]:
         file_path = "data/{}".format(file_name)
-        yesnoface, confidence = face_in_file(file_path)
-        print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
+        yesnoface, confidence, brightness = face_in_file(file_path)
+        print("{0} - {1} : {2:.2f} : {3:.2f} %".format(file_name, yesnoface, confidence, brightness))
 
-        yesnoface, confidence = face_in_binary_image(open(file_path,'rb').read())
-        print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
+        yesnoface, confidence, brightness = face_in_binary_image(open(file_path,'rb').read())
+        print("{0} - {1} : {2:.2f} : {3:.2f}%".format(file_name, yesnoface, confidence, brightness))
 
-        yesnoface, confidence = detect_face_opencv(file_path)
-        print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
+        # yesnoface, confidence, brightness = detect_face_opencv(file_path)
+        # print("{0} - {1} : {2:.2f} %".format(file_name, yesnoface, confidence))
 
 
 
