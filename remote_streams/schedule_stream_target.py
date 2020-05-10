@@ -47,7 +47,7 @@ HEADERS ={
 }
 
 START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:56:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/03/02 16:00:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime('2020/03/02 17:15:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
 WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'teaonews'
