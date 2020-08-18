@@ -46,13 +46,13 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/03/02 12:56:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/03/02 14:15:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Face Test', 'Push to tehiku.radio', 'Sunshine Radio', ]
+START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:58:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime('2020/08/14 14:00:00', '%Y/%m/%d %H:%M:%S'))
+ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ] # 'Face Test'
 WOWZA_APP_NAME = 'rtmp'
-SOURCE_STREAM_NAME = 'teaonews'
-DEFAULT_STREAM_TAKE = 'teaonews'
-DEST_STREAM_NAME = 'teaonews_auto'
+SOURCE_STREAM_NAME = 'youtube_ingest'
+DEFAULT_STREAM_TAKE = 'youtube_ingest_off'
+DEST_STREAM_NAME = 'youtube_ingest'
 
 # Load Configuration
 try:
@@ -212,7 +212,11 @@ def get_face(queue):
         try:
             with open(tmp_file.name, 'rb') as f:
                 data = f.read()
-                result = face_in_binary_image(data)
+                try:
+                    result = face_in_binary_image(data)
+                except:
+                    result = [False, 0, 0]
+
                 if result:
                     if result[0]:
                         face_count = 1
@@ -238,6 +242,19 @@ def get_face(queue):
             queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
             return
 
+
+def run_youtube(queue):
+    cmd = "ingest-youtube"
+    process = Popen(cmd, stderr=PIPE, stdout=PIPE)
+    print("Streaming")
+    queue.put({"streaming": True, "ffmpeg_starting": False})
+    for line in process.stdout:
+        sys.stdout.write(line)
+    e = process.stderr.read()
+    queue.put({
+        "streaming": False,
+        "ffmpeg_error": True,
+        "error_message": e.decode().replace('\n', ' ')})
 
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
     if not src:
@@ -274,7 +291,7 @@ def main():
     q = Queue()
 
     stream_toggle = Process(target=stream_should_start, args=(q,))
-    ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
+    ffmpeg_stream = Process(target=run_youtube, args=(q,))
 
     messages = {
         'streaming': False,
@@ -327,7 +344,7 @@ def main():
                 messages['terminate'] = False
                 messages['streaming'] = False
                 is_streaming_count = 0
-                ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
+                ffmpeg_stream = Process(target=run_youtube, args=(q,))
 
             elif messages['terminate']:
                 loop = False
@@ -352,7 +369,7 @@ def main():
                 is_streaming_count = 0
 
                 sleep(2)
-                ffmpeg_stream = Process(target=rtmp_stereo_to_mono, args=(q,))
+                ffmpeg_stream = Process(target=run_youtube, args=(q,))
 
                 if not wowza_data:
                     wowza_data = wowza_get_targets()
@@ -366,16 +383,22 @@ def main():
                     ffmpeg_stream.start()
                     notify = Process(target=call_webhooks, args=(q,"FFMPEG process started"))
                     notify.start()
-                wowza_data = wowza_get_targets()
+                if not wowza_data:
+                    wowza_data = wowza_get_targets()
 
 
-            elif messages['start_stream'] and messages['streaming'] and messages['has_face'] and messages['face_state'] != 'done':
+            elif messages['start_stream'] and messages['streaming'] and messages['has_face'] and 'done' not in messages['face_state']:
                 
                 if face_count > face_count_threshold:
                     print("Enable stream target")
+                    print(messages['has_face'])
+                    print(messages['face_state'])
                     if messages['has_face']:
                         messages['face_state'] = 'done'
-                        has_face.terminate()
+                        try:
+                            has_face.terminate()
+                        except:
+                            pass
                     if not wowza_data:
                         wowza_data = wowza_get_targets()
 
@@ -388,21 +411,24 @@ def main():
                     notify = Process(target=call_webhooks, args=(q,"Stream Targets LIVE"))
                     notify.start()
 
+                    print(messages['face_state'])
+
             else:
                 pass
 
 
-            if is_streaming_count > stream_count_threshold and not messages['has_face'] and messages['face_state'] != 'running':
+            if is_streaming_count > stream_count_threshold and not messages['has_face'] and messages['face_state'] not in ['running', 'starting']:
                 # Start face detection
                 has_face = Process(target=get_face, args=(q,))
                 face_count = 0
                 
-                try:
-                    has_face.start()
-                    print("Start Face Detection")
-                    messages['face_state'] = 'starting'
-                except:
-                    pass
+                if messages['face_state'] != 'starting':
+                    try:
+                        has_face.start()
+                        print("Start Face Detection")
+                        messages['face_state'] = 'starting'
+                    except:
+                        pass
 
                 notify = Process(target=call_webhooks, args=(q,"Start Face Detection", ['Slack Automation Channel']))
                 notify.start()

@@ -43,7 +43,7 @@ conf_dict = read_configuration("setup.cfg")
 
 setup(
     name="libretime_scripts",
-    version="0.2.1",
+    version="0.2.2",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
     packages=find_packages(),
@@ -65,7 +65,8 @@ setup(
             "waatea-fetch = tehiku_import.waatea_import:main",
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
             "radio-db-actions = radio_database_sync.db_management:main",
-            "schedule-stream-target = remote_streams.schedule_stream_target:main"
+            "schedule-stream-target = remote_streams.schedule_stream_target:main",
+            "ingest-youtube = remote_streams.ingest:main"
         ]
     },
     data_files=conf_dict['options']['data_files']
