@@ -1,4 +1,4 @@
-from multiprocessing import Pool, Manager
+from multiprocessing import Process, Queue
 from multiprocessing import TimeoutError
 import pexpect
 from pexpect import popen_spawn
@@ -21,17 +21,18 @@ STREAM_LINK = \
     'streamlink https://www.youtube.com/watch?v={watch_id} 720p,best -O'
 
 FFMPEG_STREAM = \
-    'ffmpeg -y -loglevel warning -i pipe:0 -c:v copy -c:a copy -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
+    'ffmpeg -y -loglevel warning -i pipe:0 -c:v copy -c:a copy -bsf:a aac_adtstoasc -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
 
 GOOGLE_API = \
     "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&eventType=live&type=video&key={google_api_key}"
 
 
 CHANNELS = (
-    ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
-    ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
+    # ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
+    # ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
     # ('Te Hiku TV', 'UCBxnxeNnW-xE8MTnTSVNO2A'),
-    ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow')
+    ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow'),
+    # ('Random', 'UCuWuAvEnKWez5BUr29VpwqA'),
 )
 
 # Load Configuration
@@ -56,32 +57,46 @@ except Exception as e:
     raise
 
 
-def get_watch_id(channel_id):
-    url = GOOGLE_API.format(channel_id=channel_id,
-                            google_api_key=GOOGLE_API_KEY)
-    r = requests.get(url)
-    result = r.json()
-    try:
-        video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
-        if type(video_id) == tuple:
-            return video_id[0]
-        return video_id
-    except:
-        print("Error getting watch id for {0}".format(channel_id))
-        print(result)
-        return None
+def get_watch_id(channels, queue):
+    watch_id = None
+    for channel in channels:
+        channel_id = channel[1]
+
+        url = GOOGLE_API.format(channel_id=channel_id,
+                                google_api_key=GOOGLE_API_KEY)
+        r = requests.get(url)
+        result = r.json()
+        try:
+            video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
+            if type(video_id) == tuple or type(video_id) == list:
+                watch_id = video_id[0]
+            else:
+                watch_id = video_id
+            break
+        except:
+            print("Error getting watch id for {0}".format(channel_id))
+            print(result)
+    queue.put({'watch_id': watch_id})
 
 
 def ingest_video(watch_id, queue):
-    print("Starting stream...")
+    queue.put({'status': 'Starting stream...'})
     CMD = '{0} | {1}'.format(
         STREAM_LINK.format(watch_id=watch_id),
         FFMPEG_STREAM.format(ice_creds=ICECAST_CREDS)
     )
     print(CMD)
-    p1 = Popen(CMD, shell=True)
-    while True:
-        output, e = p1.communicate()
+    process = Popen(CMD, shell=True, stderr=PIPE, stdout=PIPE)
+    
+    for line in process.stdout:
+        sys.stdout.write(line)
+    e = process.stderr.read()
+    e = e.decode().replace('\n', ' ')
+    if 'error' in e.lower():
+        queue.put({'status': 'error', 'error': e})
+    else:
+        queue.put({'status': 'done'})
+
 
 
 def run():
@@ -91,9 +106,17 @@ def run():
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGINT, original_sigint_handler)
 
-    pool = Pool(processes=NUM_PROC)
-    m = Manager()
-    q = m.Queue()
+    # pool = Pool(processes=NUM_PROC)
+    # m = Manager()
+    # q = m.Queue()
+
+
+    q = Queue()
+
+    ingest = Process(target=ingest_video, args=(None, q))
+    watch_id = None
+    fetch_watch_id = Process(target=get_watch_id, args=(CHANNELS, q))
+    fetch_watch_id.start()
 
     messages = {}
 
@@ -102,55 +125,61 @@ def run():
 
     while loop:
         try:
-            if not watching:
-                print("Checkign channels...")
-                for channel in CHANNELS:
-                    watch_id = get_watch_id(channel[1])
-                    if watch_id is not None:
-                        break
-                    time.sleep(2)
+            # if not watching:
+            #     print("Checkign channels...")
+            #     for channel in CHANNELS:
+            #         watch_id = get_watch_id(channel[1], q)
+            #         if watch_id is not None:
+            #             break
+            #         time.sleep(2)
 
             if watch_id and not watching:
                 print("Ingesting {0}".format(watch_id))
                 watching = True
-
-                res = pool.apply_async(ingest_video, (watch_id, q))
+                ingest = Process(target=ingest_video, args=(watch_id, q))
+                ingest.start()
+                # res = pool.apply_async(ingest_video, (watch_id, q))
 
             try:
                 message = q.get_nowait()
-                for k in message.keys():
-                    messages[k] = message[k]
-            except:
+                if message:
+                    for k in message:
+                        messages[k] = message[k]
+            except Exception as e:
                 pass
 
-            for key in messages.keys():
-                if 'ingesting' == key:
-                    if messages[key]:
-                        print("Ingesting")
-                    else:
-                        print("Ingestion stopped")
-                        watching = False
-                        watch_id = None
-                        messages[key]['sent'] = True
-                if 'message' == key:
 
-                    pass
+            if 'status' in messages:
+                status = messages['status']
+                del messages['status']
+                print(status)
+                if status == 'done':
+                    print('Stream done.')
+                    raise
+                elif status == 'error':
+                    print(messages['error'])
+                    raise
 
-            time.sleep(45)
+            if 'watch_id' in messages:
+                print("Found Watch ID")
+                watch_id = messages['watch_id']
+                del messages['watch_id']
+
+            time.sleep(1)
             continue
 
         except KeyboardInterrupt:
             print("Caught KeyboardInterrupt, terminating workers")
-            pool.terminate()
+            # .terminate()
             loop = False
-        except Exception as e:
-            print("All detectors died")
-            print(e)
-            pool.close()
-            loop = False
+        # except Exception as e:
+        #     print("All detectors died")
+        #     print(e)
+        #     # pool.close()
+        #     loop = False
         else:
             print("Normal termination")
-            pool.close()
+            # pool.close()
             loop = False
 
 

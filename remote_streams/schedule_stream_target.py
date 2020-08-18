@@ -47,8 +47,8 @@ HEADERS ={
 }
 
 START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:58:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/08/14 14:00:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ] # 'Face Test'
+END_TIME = timezone.localize(datetime.strptime('2020/08/14 23:00:00', '%Y/%m/%d %H:%M:%S'))
+ENTRIES = ['Face Test',]#'Push to tehiku.radio', 'Sunshine Radio', ] # 'Face Test'
 WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'youtube_ingest'
 DEFAULT_STREAM_TAKE = 'youtube_ingest_off'
@@ -249,7 +249,7 @@ def run_youtube(queue):
     print("Streaming")
     queue.put({"streaming": True, "ffmpeg_starting": False})
     for line in process.stdout:
-        sys.stdout.write(line)
+        sys.stdout.write(line.decode())
     e = process.stderr.read()
     queue.put({
         "streaming": False,
