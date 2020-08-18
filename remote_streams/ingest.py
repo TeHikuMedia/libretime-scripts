@@ -28,10 +28,10 @@ GOOGLE_API = \
 
 
 CHANNELS = (
-    # ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
-    # ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
+    ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
+    ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
     # ('Te Hiku TV', 'UCBxnxeNnW-xE8MTnTSVNO2A'),
-    ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow'),
+    # ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow'),
     # ('Random', 'UCuWuAvEnKWez5BUr29VpwqA'),
 )
 
@@ -59,24 +59,28 @@ except Exception as e:
 
 def get_watch_id(channels, queue):
     watch_id = None
-    for channel in channels:
-        channel_id = channel[1]
+    while watch_id is None:
+        for channel in channels:
+            channel_id = channel[1]
 
-        url = GOOGLE_API.format(channel_id=channel_id,
-                                google_api_key=GOOGLE_API_KEY)
-        r = requests.get(url)
-        result = r.json()
-        try:
-            video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
-            if type(video_id) == tuple or type(video_id) == list:
-                watch_id = video_id[0]
-            else:
-                watch_id = video_id
-            break
-        except:
-            print("Error getting watch id for {0}".format(channel_id))
-            print(result)
-    queue.put({'watch_id': watch_id})
+            url = GOOGLE_API.format(channel_id=channel_id,
+                                    google_api_key=GOOGLE_API_KEY)
+            r = requests.get(url)
+            result = r.json()
+            try:
+                video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
+                if type(video_id) == tuple or type(video_id) == list:
+                    watch_id = video_id[0]
+                else:
+                    watch_id = video_id
+                break
+            except:
+                print("Error getting watch id for {0}".format(channel_id))
+                print(result)
+        queue.put({'watch_id': watch_id})
+        if watch_id is None:
+            print("No sources available")
+            time.sleep(45)
 
 
 def ingest_video(watch_id, queue):
@@ -101,15 +105,8 @@ def ingest_video(watch_id, queue):
 
 def run():
 
-    NUM_PROC = 1
-    # killer = GracefulKiller()
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGINT, original_sigint_handler)
-
-    # pool = Pool(processes=NUM_PROC)
-    # m = Manager()
-    # q = m.Queue()
-
 
     q = Queue()
 
@@ -125,20 +122,12 @@ def run():
 
     while loop:
         try:
-            # if not watching:
-            #     print("Checkign channels...")
-            #     for channel in CHANNELS:
-            #         watch_id = get_watch_id(channel[1], q)
-            #         if watch_id is not None:
-            #             break
-            #         time.sleep(2)
 
             if watch_id and not watching:
                 print("Ingesting {0}".format(watch_id))
                 watching = True
                 ingest = Process(target=ingest_video, args=(watch_id, q))
                 ingest.start()
-                # res = pool.apply_async(ingest_video, (watch_id, q))
 
             try:
                 message = q.get_nowait()
