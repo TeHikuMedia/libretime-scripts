@@ -2,6 +2,7 @@ from multiprocessing import Process, Queue
 from multiprocessing import TimeoutError
 import pexpect
 from pexpect import popen_spawn
+import argparse
 import sys
 import datetime
 import urllib
@@ -17,11 +18,17 @@ from remote_streams.settings import CONF_FILE
 from subprocess import Popen, PIPE
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-w", "--watch-id", help="Provide watch id")
+parser.add_argument("-g", "--get-watch-id", help="Returns watch id", action="store_true")
+args = parser.parse_args()
+
+
 STREAM_LINK = \
     'streamlink https://www.youtube.com/watch?v={watch_id} 720p,best -O'
 
 FFMPEG_STREAM = \
-    'ffmpeg -y -loglevel warning -i pipe:0 -c:v copy -c:a copy -bsf:a aac_adtstoasc -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
+    'ffmpeg -y -re -loglevel warning -i pipe:0 -c:v copy -c:a copy -bsf:a aac_adtstoasc -f flv rtmp://rtmp.tehiku.live:1935/rtmp/youtube_ingest'
 
 GOOGLE_API = \
     "https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&eventType=live&type=video&key={google_api_key}"
@@ -32,7 +39,7 @@ CHANNELS = (
     ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
     # ('Te Hiku TV', 'UCBxnxeNnW-xE8MTnTSVNO2A'),
     # ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow'),
-    # ('Random', 'UCuWuAvEnKWez5BUr29VpwqA'),
+    # ('Random', 'UCeY0bbntWzzVIaj2z3QigXg'),
 )
 
 # Load Configuration
@@ -59,28 +66,33 @@ except Exception as e:
 
 def get_watch_id(channels, queue):
     watch_id = None
-    while watch_id is None:
-        for channel in channels:
-            channel_id = channel[1]
+    for channel in channels:
+        channel_id = channel[1]
 
-            url = GOOGLE_API.format(channel_id=channel_id,
-                                    google_api_key=GOOGLE_API_KEY)
+        url = GOOGLE_API.format(channel_id=channel_id,
+                                google_api_key=GOOGLE_API_KEY)
+        try:
             r = requests.get(url)
             result = r.json()
-            try:
-                video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
-                if type(video_id) == tuple or type(video_id) == list:
-                    watch_id = video_id[0]
-                else:
-                    watch_id = video_id
-                break
-            except:
-                print("Error getting watch id for {0}".format(channel_id))
-                print(result)
-        queue.put({'watch_id': watch_id})
-        if watch_id is None:
-            print("No sources available")
-            time.sleep(45)
+        except Exception as e:
+            result={'error': e}
+        try:
+            video_id = result['items'][0]['id']['videoId'], result['items'][0]['id']['videoId']
+            if type(video_id) == tuple or type(video_id) == list:
+                watch_id = video_id[0]
+            else:
+                watch_id = video_id
+            break
+        except:
+
+            pass
+            # print(f"No live streams available for {channel_id}")
+    queue.put({'watch_id': watch_id})
+    if watch_id is None:
+        if 'error' in result:
+            queue.put({'error': result['error']})
+    return watch_id
+            
 
 
 def ingest_video(watch_id, queue):
@@ -103,17 +115,20 @@ def ingest_video(watch_id, queue):
 
 
 
-def run():
-
+def run(watch_id=None, get_id=False):
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGINT, original_sigint_handler)
 
     q = Queue()
 
+    if get_id:
+        return print(get_watch_id(CHANNELS, q))
+
     ingest = Process(target=ingest_video, args=(None, q))
-    watch_id = None
-    fetch_watch_id = Process(target=get_watch_id, args=(CHANNELS, q))
-    fetch_watch_id.start()
+
+    if not watch_id:
+        fetch_watch_id = Process(target=get_watch_id, args=(CHANNELS, q))
+        fetch_watch_id.start()
 
     messages = {}
 
@@ -127,7 +142,11 @@ def run():
                 print("Ingesting {0}".format(watch_id))
                 watching = True
                 ingest = Process(target=ingest_video, args=(watch_id, q))
-                ingest.start()
+                try:
+                    ingest.start()
+                except:
+                    ingest.terminate()
+                    ingest.start()
 
             try:
                 message = q.get_nowait()
@@ -144,14 +163,22 @@ def run():
                 print(status)
                 if status == 'done':
                     print('Stream done.')
-                    raise
+                    loop = False
                 elif status == 'error':
                     print(messages['error'])
-                    raise
+                    ingest.terminate()
+                    watching = False
+                    # Just terminate
+                    loop = False
 
             if 'watch_id' in messages:
-                print("Found Watch ID")
                 watch_id = messages['watch_id']
+                if watch_id:
+                    print("Found Watch ID")
+                else:
+                    print("No sources available. Exiting.")
+                    loop = False
+
                 del messages['watch_id']
 
             time.sleep(1)
@@ -173,7 +200,10 @@ def run():
 
 
 def main():
-    run()
+    WATCH_ID = None
+    if args.watch_id:
+        WATCH_ID = args.watch_id
+    run(WATCH_ID, args.get_watch_id)
 
 
 if __name__ == "__main__":

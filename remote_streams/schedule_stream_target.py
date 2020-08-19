@@ -3,6 +3,7 @@ import requests
 from requests.auth import HTTPDigestAuth
 import os
 import stat
+import ast
 from datetime import datetime
 import time
 import json
@@ -17,6 +18,8 @@ from remote_streams.notify import call_webhooks
 import pytz
 import tempfile as tf
 import logging
+import signal
+
 
 timezone = pytz.timezone("Pacific/Auckland")
 
@@ -47,8 +50,9 @@ HEADERS ={
 }
 
 START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:58:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/08/14 14:15:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ] # 'Face Test'
+END_TIME = timezone.localize(datetime.strptime('2020/08/14 19:15:00', '%Y/%m/%d %H:%M:%S'))
+ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ]
+# ENTRIES = ['Face Test']
 WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'youtube_ingest'
 DEFAULT_STREAM_TAKE = 'youtube_ingest_off'
@@ -244,18 +248,42 @@ def get_face(queue):
 
 
 def run_youtube(queue):
-    cmd = "ingest-youtube"
-    process = Popen(cmd, stderr=PIPE, stdout=PIPE)
-    print("Streaming")
-    queue.put({"streaming": True, "ffmpeg_starting": False})
-    for line in process.stdout:
-        sys.stdout.write(line.decode())
-    e = process.stderr.read()
     queue.put({
-        "streaming": False,
-        "ffmpeg_error": True,
-        "error_message": e.decode().replace('\n', ' ')})
-
+        "ffmpeg_starting": True,
+        "face_conf_msg": "Fetching YouTube targets"
+    })
+    process = Popen(['ingest-youtube', '-g'], stderr=PIPE, stdout=PIPE)
+    out, e = process.communicate()
+    result = out.decode().strip()
+    if result != 'None':
+        cmd = ["ingest-youtube", "-w", result]
+        process = Popen(cmd, stderr=PIPE, stdout=PIPE)
+        queue.put({
+            "streaming": True,
+            "ffmpeg_starting": False,
+            "face_conf_msg": " YouTube ingestion started "
+            })
+        out, e = process.communicate()
+        out = out.decode()
+        e = e.decode().replace('\n', ' ')
+        queue.put({
+            "streaming": False,
+            "ffmpeg_error": True,
+            "error_message": e})
+    else:
+        time.sleep(5)
+        queue.put({
+            "streaming": False,
+            "ffmpeg_starting": True,
+            "face_conf_msg": " YouTube targets not live "
+        })
+        time.sleep(40)
+        queue.put({
+            "streaming": False,
+            "ffmpeg_starting": False,
+            "face_conf_msg": " YouTube targets not live "
+        })
+        
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
     if not src:
         src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
@@ -287,6 +315,8 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
         "error_message": e.decode().replace('\n', ' ')})
 
 def main():
+    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGINT, original_sigint_handler)
     
     q = Queue()
 
@@ -364,7 +394,6 @@ def main():
                 messages['ffmpeg_error'] = False
                 messages['streaming'] = False
                 messages['ffmpeg_starting'] = False
-                
 
                 is_streaming_count = 0
 
@@ -377,12 +406,18 @@ def main():
                     toggle_stream_targets(q, wowza_data, False, default_stream_source=DEST_STREAM_NAME)
                 
             elif messages['start_stream'] and not messages['streaming'] and not messages['ffmpeg_starting']:
-                # Scheduled start
-                messages['ffmpeg_starting'] = True
                 if ffmpeg_stream:
-                    ffmpeg_stream.start()
-                    notify = Process(target=call_webhooks, args=(q,"FFMPEG process started"))
-                    notify.start()
+                    try:
+                        ffmpeg_stream.start()
+                        notify = Process(target=call_webhooks, args=(q,"FFMPEG process started"))
+                        notify.start()
+                    except Exception as e:
+                        pass
+                        ffmpeg_stream.terminate()
+                        ffmpeg_stream = Process(target=run_youtube, args=(q,))
+                        ffmpeg_stream.start()
+                        messages['ffmpeg_starting'] = True
+
                 if not wowza_data:
                     wowza_data = wowza_get_targets()
 
@@ -391,8 +426,8 @@ def main():
                 
                 if face_count > face_count_threshold:
                     print("Enable stream target")
-                    print(messages['has_face'])
-                    print(messages['face_state'])
+                    # print(messages['has_face'])
+                    # print(messages['face_state'])
                     if messages['has_face']:
                         messages['face_state'] = 'done'
                         try:
@@ -411,7 +446,7 @@ def main():
                     notify = Process(target=call_webhooks, args=(q,"Stream Targets LIVE"))
                     notify.start()
 
-                    print(messages['face_state'])
+                    # print(messages['face_state'])
 
             else:
                 pass
@@ -425,7 +460,7 @@ def main():
                 if messages['face_state'] != 'starting':
                     try:
                         has_face.start()
-                        print("Start Face Detection")
+                        # print("Start Face Detection")
                         messages['face_state'] = 'starting'
                     except:
                         pass
@@ -479,7 +514,7 @@ def main():
                 notify = Process(target=call_webhooks, args=(q,"Scheduled Stream Start process running"))
                 notify.start()
 
-            if not ffmpeg_stream.is_alive() and messages['ffmpeg_starting']:
+            if not ffmpeg_stream.is_alive() and messages['ffmpeg_error']:
                 notify = Process(target=call_webhooks, args=(q,"FFMPEG process died"))
                 notify.start()
 

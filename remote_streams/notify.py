@@ -59,9 +59,10 @@ def call_webhooks(queue, message, hooks=['Slack Automation Channel', 'Kingi' ]):
                 "watch": "https://tehiku.nz/c.B3",
             }
 
-        r = requests.post(url, headers=HEADERS, data=json.dumps(payload))
-
-        print(r.content)
+        try:
+            r = requests.post(url, headers=HEADERS, data=json.dumps(payload))
+        except:
+            pass
 
 if __name__ == "__main__":
     call_webhooks(None,'Test ')
