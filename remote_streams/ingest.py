@@ -36,7 +36,7 @@ GOOGLE_API = \
 
 CHANNELS = (
     ('Ministry of Health', 'UCPuGpQo9IX49SGn2iYCoqOQ'),
-    ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
+    # ('RNZ', 'UCRUisv_fP2DKSoR2pywxY9w'),
     # ('Te Hiku TV', 'UCBxnxeNnW-xE8MTnTSVNO2A'),
     # ('Le Chilled Cow', 'UCSJ4gkVC6NrvII8umztf0Ow'),
     # ('Random', 'UCeY0bbntWzzVIaj2z3QigXg'),
