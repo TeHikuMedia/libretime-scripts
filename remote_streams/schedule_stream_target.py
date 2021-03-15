@@ -49,7 +49,7 @@ HEADERS ={
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:57:00', '%Y/%m/%d %H:%M:%S'))
+START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:59:00', '%Y/%m/%d %H:%M:%S'))
 END_TIME = timezone.localize(datetime.strptime('2020/08/14 13:50:00', '%Y/%m/%d %H:%M:%S'))
 ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ]
 # ENTRIES = ['Face Test']

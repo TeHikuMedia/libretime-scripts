@@ -105,6 +105,7 @@ def get_item_from_collection(
         publication = r.json()
 
         publish_date = datetime.fromisoformat(publication['publish_date'].replace('Z','.000000+00:00'))
+        last_updated = datetime.fromisoformat(publication['last_updated'].replace('Z','+00:00'))
         # publish_date = pytz.utc.localize(publish_date)
         # Different file name strategy
         if daily:
@@ -166,6 +167,8 @@ def get_item_from_collection(
   
                 if last_modifed > file_timestamp:
                     print('File needs updating.')
+                    DOWNLOAD = True
+                elif last_updated > file_timestamp:
                     DOWNLOAD = True
                 else:
                     print('File exists')
