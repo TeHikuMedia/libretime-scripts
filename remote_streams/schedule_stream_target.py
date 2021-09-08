@@ -24,7 +24,8 @@ import signal
 timezone = pytz.timezone("Pacific/Auckland")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--daemon", help="Daemonize. Don't print.", action="store_true")
+parser.add_argument(
+    "-d", "--daemon", help="Daemonize. Don't print.", action="store_true")
 args = parser.parse_args()
 
 
@@ -44,14 +45,16 @@ RESOURCE = "applications/rtmp/adv"
 
 CHECK_STREAM_AVAILABLE = 'applications/{app_name}/instances/_definst_/incomingstreams/{stream_name}/monitoring/current'
 
-HEADERS ={
-    'Accept': 'application/json; charset=utf-8' ,
+HEADERS = {
+    'Accept': 'application/json; charset=utf-8',
     'Content-Type': 'application/json; charset=utf-8'
 }
 
-START_TIME = timezone.localize(datetime.strptime('2020/08/14 12:59:00', '%Y/%m/%d %H:%M:%S'))
-END_TIME = timezone.localize(datetime.strptime('2020/08/14 13:50:00', '%Y/%m/%d %H:%M:%S'))
-ENTRIES = ['Push to tehiku.radio', 'Sunshine Radio', ]
+START_TIME = timezone.localize(datetime.strptime(
+    '2021/08/20 14:59:00', '%Y/%m/%d %H:%M:%S'))
+END_TIME = timezone.localize(datetime.strptime(
+    '2021/08/20 16:00:00', '%Y/%m/%d %H:%M:%S'))
+ENTRIES = ['Push to tehiku.radio', ]
 # ENTRIES = ['Face Test']
 WOWZA_APP_NAME = 'rtmp'
 SOURCE_STREAM_NAME = 'youtube_ingest'
@@ -72,7 +75,8 @@ try:
     LOG_FILE = os.path.join(LOGDIR, 'face_detect.log')
     if not os.path.exists(LOG_FILE):
         open(LOG_FILE, 'a').close()
-        os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+        os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR |
+                 stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
 except KeyError as e:
     print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
@@ -83,7 +87,8 @@ except Exception as e:
 
 
 try:
-    logging.basicConfig(format='%(asctime)s: %(message)s',filename=LOG_FILE,level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s: %(message)s',
+                        filename=LOG_FILE, level=logging.DEBUG)
 except:
     pass
 
@@ -97,20 +102,25 @@ def log(message, level=logging.DEBUG):
 
 def stream_exists(app_name, stream_name):
     try:
-        url = os.path.join(BASEURL, CHECK_STREAM_AVAILABLE.format(app_name=app_name, stream_name=stream_name))
-        r = requests.get(url, auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS,)
+        url = os.path.join(BASEURL, CHECK_STREAM_AVAILABLE.format(
+            app_name=app_name, stream_name=stream_name))
+        r = requests.get(url, auth=HTTPDigestAuth(
+            USER, PASSWORD), headers=HEADERS,)
         res = r.json()
         return (res['uptime'] > 1)
     except:
         return False
 
+
 def wowza_put_data(resource, data):
     try:
-        r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
+        r = requests.put(os.path.join(BASEURL, resource), auth=HTTPDigestAuth(
+            USER, PASSWORD), headers=HEADERS, data=json.dumps(data))
         res = r.json()
         print("Result: {0}".format(res))
     except:
         print("Error putting data...")
+
 
 def wowza_get_targets():
     success = False
@@ -124,7 +134,8 @@ def wowza_get_targets():
 
         RESOURCE = "applications/rtmp/pushpublish/mapentries"
         try:
-            r = requests.get(os.path.join(BASEURL, RESOURCE), auth=HTTPDigestAuth('API', 'Ku4ka1840'), headers=HEADERS)
+            r = requests.get(os.path.join(BASEURL, RESOURCE), auth=HTTPDigestAuth(
+                'API', 'Ku4ka1840'), headers=HEADERS)
             data = r.json()
             success = data['success']
         except KeyError:
@@ -132,11 +143,11 @@ def wowza_get_targets():
         except Exception as e:
             print(f"\rError querying wowza server... {indi[count]}", end='')
             success = False
-        
+
         if not success:
             sleep(15)
 
-    call_webhooks(None,"Wowza Server running")
+    call_webhooks(None, "Wowza Server running")
     return data
 
 
@@ -151,6 +162,7 @@ def toggle_stream_targets(queue, wowza_data, state, entries=ENTRIES, default_str
                 wowza_put_data(RESOURCE, entry)
                 queue.put({'targets_enabled': state})
 
+
 def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
 
     # TODO
@@ -162,7 +174,7 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
     wowza_data = wowza_get_targets()
 
     start = start_time.hour*60*60 + start_time.minute*60 + start_time.second
-    end   = end_time.hour*60*60   + end_time.minute*60   + end_time.second
+    end = end_time.hour*60*60 + end_time.minute*60 + end_time.second
 
     state = [False, False]
     while True:
@@ -189,17 +201,20 @@ def stream_should_start(queue, start_time=START_TIME, end_time=END_TIME):
                 print("Stop Stream")
                 queue.put({'start_stream': False})
                 state = [False, False]
-                toggle_stream_targets(queue, wowza_data, False, default_stream_source=DEFAULT_STREAM_TAKE)
+                toggle_stream_targets(
+                    queue, wowza_data, False, default_stream_source=DEFAULT_STREAM_TAKE)
 
         time.sleep(1)
 
+
 def get_thumb_url():
     # Generate random size so we don't cache.
-    width = 400.0 + randrange(0,500,1)
+    width = 400.0 + randrange(0, 500, 1)
     height = width * 9 / 16
     image_size = f'{(width):0.0f}x{(height):0.0f}'
     return \
         f'http://rtmp.tehiku.live:8086/thumbnail?application=rtmp&streamname={SOURCE_STREAM_NAME}&size={image_size}'
+
 
 def get_face(queue):
     src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
@@ -209,10 +224,10 @@ def get_face(queue):
         Popen(['rm', tmp_file.name])
 
     while True:
-        queue.put({'face_state': 'running',})
+        queue.put({'face_state': 'running', })
         cmd = ['curl', '-o', tmp_file.name, get_thumb_url()]
         process = Popen(cmd, stderr=PIPE, stdout=PIPE)
-        o,e = process.communicate()
+        o, e = process.communicate()
         try:
             with open(tmp_file.name, 'rb') as f:
                 data = f.read()
@@ -240,10 +255,11 @@ def get_face(queue):
                     sleep(.2)
                     queue.put({'has_face': False, })
             Popen(['rm', tmp_file.name])
-            
+
         except Exception as e:
             logging.error(e)
-            queue.put({'face_state': 'stopped','has_face': False, 'face_error': e})
+            queue.put({'face_state': 'stopped',
+                       'has_face': False, 'face_error': e})
             return
 
 
@@ -262,7 +278,7 @@ def run_youtube(queue):
             "streaming": True,
             "ffmpeg_starting": False,
             "face_conf_msg": " YouTube ingestion started "
-            })
+        })
         out, e = process.communicate()
         out = out.decode()
         e = e.decode().replace('\n', ' ')
@@ -283,7 +299,8 @@ def run_youtube(queue):
             "ffmpeg_starting": False,
             "face_conf_msg": " YouTube targets not live "
         })
-        
+
+
 def rtmp_stereo_to_mono(queue, src=None, dst=None):
     if not src:
         src = "rtmp://rtmp.tehiku.live:1935/rtmp/" + SOURCE_STREAM_NAME
@@ -314,10 +331,11 @@ def rtmp_stereo_to_mono(queue, src=None, dst=None):
         "ffmpeg_error": True,
         "error_message": e.decode().replace('\n', ' ')})
 
+
 def main():
     original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGINT, original_sigint_handler)
-    
+
     q = Queue()
 
     stream_toggle = Process(target=stream_should_start, args=(q,))
@@ -338,7 +356,8 @@ def main():
     }
 
     stream_toggle.start()
-    notify = Process(target=call_webhooks, args=(q,"Scheduled Stream Start process running"))
+    notify = Process(target=call_webhooks, args=(
+        q, "Scheduled Stream Start process running"))
     notify.start()
 
     loop = True
@@ -383,12 +402,12 @@ def main():
             elif messages['ffmpeg_error']:
                 if ffmpeg_stream:
                     ffmpeg_stream.terminate()
-                
+
                 try:
                     has_face.terminate()
                 except:
                     pass
-                    
+
                 messages['has_face'] = False
                 messages['face_state'] = 'stopped'
                 messages['ffmpeg_error'] = False
@@ -403,13 +422,15 @@ def main():
                 if not wowza_data:
                     wowza_data = wowza_get_targets()
                 if messages['targets_enabled']:
-                    toggle_stream_targets(q, wowza_data, False, default_stream_source=DEST_STREAM_NAME)
-                
+                    toggle_stream_targets(
+                        q, wowza_data, False, default_stream_source=DEST_STREAM_NAME)
+
             elif messages['start_stream'] and not messages['streaming'] and not messages['ffmpeg_starting']:
                 if ffmpeg_stream:
                     try:
                         ffmpeg_stream.start()
-                        notify = Process(target=call_webhooks, args=(q,"FFMPEG process started"))
+                        notify = Process(target=call_webhooks, args=(
+                            q, "FFMPEG process started"))
                         notify.start()
                     except Exception as e:
                         pass
@@ -421,9 +442,8 @@ def main():
                 if not wowza_data:
                     wowza_data = wowza_get_targets()
 
-
             elif messages['start_stream'] and messages['streaming'] and messages['has_face'] and 'done' not in messages['face_state']:
-                
+
                 if face_count > face_count_threshold:
                     print("Enable stream target")
                     # print(messages['has_face'])
@@ -437,13 +457,16 @@ def main():
                     if not wowza_data:
                         wowza_data = wowza_get_targets()
 
-                    toggle_stream_targets(q, wowza_data, True, default_stream_source=DEST_STREAM_NAME)
+                    toggle_stream_targets(
+                        q, wowza_data, True, default_stream_source=DEST_STREAM_NAME)
                     messages['face_starting'] = False
 
-                    notify = Process(target=call_webhooks, args=(q,"Face Threshold Met", ['Slack Automation Channel']))
+                    notify = Process(target=call_webhooks, args=(
+                        q, "Face Threshold Met", ['Slack Automation Channel']))
                     notify.start()
 
-                    notify = Process(target=call_webhooks, args=(q,"Stream Targets LIVE"))
+                    notify = Process(target=call_webhooks,
+                                     args=(q, "Stream Targets LIVE"))
                     notify.start()
 
                     # print(messages['face_state'])
@@ -451,12 +474,11 @@ def main():
             else:
                 pass
 
-
             if is_streaming_count > stream_count_threshold and not messages['has_face'] and messages['face_state'] not in ['running', 'starting']:
                 # Start face detection
                 has_face = Process(target=get_face, args=(q,))
                 face_count = 0
-                
+
                 if messages['face_state'] != 'starting':
                     try:
                         has_face.start()
@@ -465,7 +487,8 @@ def main():
                     except:
                         pass
 
-                notify = Process(target=call_webhooks, args=(q,"Start Face Detection", ['Slack Automation Channel']))
+                notify = Process(target=call_webhooks, args=(
+                    q, "Start Face Detection", ['Slack Automation Channel']))
                 notify.start()
 
             if 'face_count' in messages.keys():
@@ -474,10 +497,9 @@ def main():
                 if new_face_count != face_count:
                     face_count = new_face_count
                     messages['face_conf_msg'] = messages['face_conf_msg'] + f" found a face {face_count} times"
-                
 
             STREAM_MSG = ''
-            if messages['streaming'] and not messages['ffmpeg_error']:                
+            if messages['streaming'] and not messages['ffmpeg_error']:
                 if is_streaming_count > stream_count_threshold:
                     STREAM_MSG = f'{bcolors.OKGREEN}FFMPEG Streaming {indi[count]}{bcolors.ENDC}'
 
@@ -488,7 +510,6 @@ def main():
 
             if is_streaming_count < stream_count_threshold and messages['start_stream']:
                 STREAM_MSG = f'{bcolors.WARNING}FFMPEG Starting  {indi[count]}{bcolors.ENDC}'
-
 
             emsg = messages['error_message']
             if emsg:
@@ -505,17 +526,19 @@ def main():
 {bcolors.FAIL}{emsg}{bcolors.ENDC}\
 {bcolors.OKBLUE}{bcolors.BOLD}{fmsg}{bcolors.ENDC}{bcolors.ENDC}", end='', flush=True)
 
-
             if not stream_toggle.is_alive():
-                notify = Process(target=call_webhooks, args=(q,"Stream Toggle process died"))
+                notify = Process(target=call_webhooks, args=(
+                    q, "Stream Toggle process died"))
                 notify.start()
                 stream_toggle = Process(target=stream_should_start, args=(q,))
                 stream_toggle.start()
-                notify = Process(target=call_webhooks, args=(q,"Scheduled Stream Start process running"))
+                notify = Process(target=call_webhooks, args=(
+                    q, "Scheduled Stream Start process running"))
                 notify.start()
 
             if not ffmpeg_stream.is_alive() and messages['ffmpeg_error']:
-                notify = Process(target=call_webhooks, args=(q,"FFMPEG process died"))
+                notify = Process(target=call_webhooks,
+                                 args=(q, "FFMPEG process died"))
                 notify.start()
 
         except KeyboardInterrupt as e:

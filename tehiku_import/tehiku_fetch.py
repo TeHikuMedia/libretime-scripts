@@ -14,38 +14,66 @@ import sys
 from tempfile import NamedTemporaryFile
 
 from tehiku_import.import_functions import scale_media
-from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD
+from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD, CONF_FILE
 from tehiku_import.add_artwork import add_artwork
+
+# Load Configuration
+with open(CONF_FILE, 'rb') as file:
+    try:
+        d = json.loads(file.read())
+        TOKEN = d['app_token']
+    except KeyError as e:
+        print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
+        raise
+    except Exception as e:
+        print('Could not read configuration file {0}.'.format(CONF_FILE))
+        raise
+
+BASE_API_URL = 'https://tehiku.nz/rest-api/'
+HEADERS = {
+    'Content-Type': 'application/json',
+    'Authorization': f'AppToken {TOKEN}'
+}
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--collection", help="Collection slug name, separated by comma.")
-parser.add_argument("-a", "--am-pm", help="Whether to write file with AM/PM", action="store_true")
-parser.add_argument("-d", "--daily", help="Whether to overwrite file with latest", action="store_true")
-parser.add_argument("-r", "--remove-after-days", help="Remove file if it's older than X days.")
+parser.add_argument("-c", "--collection",
+                    help="Collection slug name, separated by comma.")
+parser.add_argument(
+    "-a", "--am-pm", help="Whether to write file with AM/PM", action="store_true")
+parser.add_argument(
+    "-d", "--daily", help="Whether to overwrite file with latest", action="store_true")
+parser.add_argument("-r", "--remove-after-days",
+                    help="Remove file if it's older than X days.")
 parser.add_argument("-n", "--get-n-items", help="Download n latests items")
 parser.add_argument("-l", "--label", help="Label to apply to the file.")
-parser.add_argument("-t", "--target-length", help="Duration in seconds that the file should be")
-parser.add_argument("-x", "--delete", help="Delete files that match.", action="store_true")
+parser.add_argument("-t", "--target-length",
+                    help="Duration in seconds that the file should be")
+parser.add_argument(
+    "-x", "--delete", help="Delete files that match.", action="store_true")
 
 args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
-STORE = os.path.join(BASE_MEDIA_DIR,'tehiku_fetch_data.json')
+STORE = os.path.join(BASE_MEDIA_DIR, 'tehiku_fetch_data.json')
+
 
 def convert_audio(file_path):
-    outfile = '.'.join( file_path.split('.')[:-1] )+'.mp3'
-    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a', 'libmp3lame', '-b:a', '192k', outfile]
+    outfile = '.'.join(file_path.split('.')[:-1])+'.mp3'
+    cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a',
+           'libmp3lame', '-b:a', '192k', outfile]
     print(cmd)
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     Popen(['rm', file_path])
     return outfile
 
+
 def utc2local(utc):
     epoch = time.mktime(utc.timetuple())
-    offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
+    offset = datetime.fromtimestamp(epoch) - datetime.utcfromtimestamp(epoch)
     return utc + offset
+
 
 def store_hash(md5):
     data = {}
@@ -74,45 +102,52 @@ def get_root_dir():
         p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate() 
+        p.communicate()
     return ROOT_DIR
 
 
 def get_item_from_collection(
         collection, num_items=40, expire=7, ampm=False, daily=False,
         label='', duration=None, delete=False):
-    
+
     ROOT_DIR = get_root_dir()
 
     collection_url = 'https://tehiku.nz/api/?collection={0}'.format(collection)
 
     r = requests.get(collection_url)
     collection = r.json()
-    pub_ids = collection['publications'][0:num_items]
+    URI = f"{BASE_API_URL}collections/{collection['id']}/publications/?limit=40"
+    r = requests.get(
+        URI,
+        headers=HEADERS
+    )
+    d = r.json()
+    pubilcations = d['results']
 
     # Use watch for files with metadata. Use store to keep original file hashes
-    
     count = 0
     while count < num_items:
         count = count + 1
-        try:
-            pub_id = pub_ids.pop(0)
-        except:
-            break
         DOWNLOAD = False
-        pub_url = 'https://tehiku.nz/api/?publication_id={0}'.format(pub_id)
-        r = requests.get(pub_url)
-        publication = r.json()
+        publication = pubilcations[count-1]
+        pub_id = publication['id']
 
-        publish_date = datetime.fromisoformat(publication['publish_date'].replace('Z','.000000+00:00'))
-        last_updated = datetime.fromisoformat(publication['last_updated'].replace('Z','+00:00'))
-        # publish_date = pytz.utc.localize(publish_date)
+        publish_date = datetime.strptime(
+            publication['publish_date'],
+            '%Y-%m-%dT%H:%M:%S%z'
+        )
+
+        last_updated = datetime.strptime(
+            publication['last_updated'],
+            '%Y-%m-%dT%H:%M:%S%z'
+        )
         # Different file name strategy
         if daily:
             file_name = "tehiku_{0}".format(collection['id'])
         elif ampm:
             local_time = publish_date.astimezone(timezone)
-            file_name = "tehiku_{0}_{1}".format(collection['id'], local_time.strftime('%p'))
+            file_name = "tehiku_{0}_{1}".format(
+                collection['id'], local_time.strftime('%p'))
             publication['headline'] = ' '.join([
                 collection['name'].title(),
                 local_time.strftime('%p'),
@@ -134,7 +169,8 @@ def get_item_from_collection(
             continue
         file_extension = file_url.split('.')[-1]
 
-        file_path = os.path.join(ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
+        file_path = os.path.join(
+            ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
 
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
@@ -148,14 +184,15 @@ def get_item_from_collection(
             # Check if we should delete it
             if now - publish_date > timedelta(days=expire) or delete:
                 # Remove old item
-                p = Popen(['rm',file_path], stdin=PIPE, stdout=PIPE)
+                p = Popen(['rm', file_path], stdin=PIPE, stdout=PIPE)
                 output, error = p.communicate()
                 if error:
                     print("Error removing old file.")
                 continue
             elif now - publish_date <= timedelta(days=expire):
                 # Check file hasn't changed
-                p = Popen(['curl', '-s','-I',file_url], stdin=PIPE, stdout=PIPE)
+                p = Popen(['curl', '-s', '-I', file_url],
+                          stdin=PIPE, stdout=PIPE)
                 output, error = p.communicate()
 
                 m = re.search(r'last-modified: ([\w|,| |:]+)', str(output))
@@ -164,7 +201,7 @@ def get_item_from_collection(
 
                 file_timestamp = pytz.utc.localize(
                     datetime.utcfromtimestamp(os.path.getmtime(file_path)))
-  
+
                 if last_modifed > file_timestamp:
                     print('File needs updating.')
                     DOWNLOAD = True
@@ -209,11 +246,11 @@ def get_item_from_collection(
             except:
                 pass
             try:
-                fd.tags['Title'] =  publication['headline']
+                fd.tags['Title'] = publication['headline']
             except:
                 pass
             try:
-                fd.tags['Language'] =  publication['media'][0]['primary_language']
+                fd.tags['Language'] = publication['media'][0]['primary_language']
             except:
                 pass
             fd.tags['Album'] = collection['name']
@@ -225,11 +262,11 @@ def get_item_from_collection(
 
             # Try to embed picture
             # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
-            add_artwork(publication['image_thumb_small'], tmp_file)
+            add_artwork(publication['image']['thumb_small'], tmp_file)
 
             # Finally move the file to where it needs to be
             Popen(['mv', tmp_file, file_path])
-            
+
 
 def main():
     prepare_folders()
@@ -275,15 +312,18 @@ def main():
 
     sys.exit(0)
 
+
 def prepare_folders():
     # setup_folders
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
-        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR],
+                  stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR], stdin=PIPE, stdout=PIPE)
-        p.communicate()   
+        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
+                  stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     main()
