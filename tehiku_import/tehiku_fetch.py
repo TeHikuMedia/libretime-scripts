@@ -201,7 +201,7 @@ def get_item_from_collection(
 
                 file_timestamp = pytz.utc.localize(
                     datetime.utcfromtimestamp(os.path.getmtime(file_path)))
-
+                print(datetime.utcfromtimestamp(os.path.getmtime(file_path)))
                 if (last_modifed > file_timestamp) or (last_updated > file_timestamp):
                     print('File needs updating.')
                     DOWNLOAD = True
