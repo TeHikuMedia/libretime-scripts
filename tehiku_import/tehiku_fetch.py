@@ -130,7 +130,7 @@ def get_item_from_collection(
         DOWNLOAD = False
         publication = pubilcations[count-1]
         pub_id = publication['id']
-        print(publication)
+
         publish_date = datetime.strptime(
             publication['publish_date'],
             '%Y-%m-%dT%H:%M:%S%z'
@@ -200,7 +200,7 @@ def get_item_from_collection(
 
                 file_timestamp = pytz.utc.localize(
                     datetime.utcfromtimestamp(os.path.getmtime(file_path)))
-                print(datetime.utcfromtimestamp(os.path.getmtime(file_path)))
+
                 if (last_modifed > file_timestamp) or (last_updated > file_timestamp):
                     print('File needs updating.')
                     DOWNLOAD = True
