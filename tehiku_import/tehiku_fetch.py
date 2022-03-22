@@ -208,6 +208,10 @@ def get_item_from_collection(
                 elif last_updated > file_timestamp:
                     DOWNLOAD = True
                 else:
+                    print(f"last_modified:  {last_modifed}")
+                    print(f"last_updated:   {last_updated}")
+                    print(f"file_timestamp: {file_timestamp}")
+                    print(publication)
                     print('File exists')
                     continue
             else:
