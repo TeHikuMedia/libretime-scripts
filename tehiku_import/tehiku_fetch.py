@@ -123,7 +123,7 @@ def get_item_from_collection(
     )
     d = r.json()
     pubilcations = d['results']
-
+    print(d['count'])
     # Use watch for files with metadata. Use store to keep original file hashes
     count = 0
     while count < num_items:
@@ -131,7 +131,7 @@ def get_item_from_collection(
         DOWNLOAD = False
         publication = pubilcations[count-1]
         pub_id = publication['id']
-
+        print(publication)
         publish_date = datetime.strptime(
             publication['publish_date'],
             '%Y-%m-%dT%H:%M:%S%z'
