@@ -123,7 +123,6 @@ def get_item_from_collection(
     )
     d = r.json()
     pubilcations = d['results']
-    print(d['count'])
     # Use watch for files with metadata. Use store to keep original file hashes
     count = 0
     while count < num_items:
@@ -206,11 +205,6 @@ def get_item_from_collection(
                     print('File needs updating.')
                     DOWNLOAD = True
                 else:
-                    print(f"last_modified:  {last_modifed}")
-                    print(f"last_updated:   {last_updated}")
-                    print(f"file_timestamp: {file_timestamp}")
-                    print(publication)
-                    print('File exists')
                     continue
             else:
                 print('Strange edge case')
@@ -283,7 +277,7 @@ def main():
         EXPIRE = 7
 
     if args.am_pm:
-        NUM_GET = 1
+        NUM_GET = 2
 
     if args.daily:
         NUM_GET = 1
