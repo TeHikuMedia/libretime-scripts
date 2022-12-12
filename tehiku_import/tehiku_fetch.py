@@ -6,6 +6,7 @@ import time
 import pytz
 from math import floor
 import json
+from glob import glob
 import re
 from subprocess import Popen, PIPE
 import argparse
@@ -122,13 +123,13 @@ def get_item_from_collection(
         headers=HEADERS
     )
     d = r.json()
-    pubilcations = d['results']
+    publications = d['results']
     # Use watch for files with metadata. Use store to keep original file hashes
     count = 0
     while count < num_items:
         count = count + 1
         DOWNLOAD = False
-        publication = pubilcations[count-1]
+        publication = publications[count-1]
         pub_id = publication['id']
 
         publish_date = datetime.strptime(
@@ -262,6 +263,19 @@ def get_item_from_collection(
 
             # Finally move the file to where it needs to be
             Popen(['mv', tmp_file, file_path])
+    # Now remove items that are older (file system date) than the expire
+    for file_path in glob(f"{ROOT_DIR}/tehiku_{collection['id']}_*"):
+        print(file_path)
+        file_timestamp = pytz.utc.localize(
+            datetime.utcfromtimestamp(os.path.getmtime(file_path))
+        )
+        now = pytz.utc.localize(datetime.utcnow())
+        if now - file_timestamp > timedelta(days=expire):
+            p = Popen(['rm', file_path], stdin=PIPE, stdout=PIPE)
+            output, error = p.communicate()
+            if error:
+                print("Error removing old file.")
+                continue
 
 
 def main():

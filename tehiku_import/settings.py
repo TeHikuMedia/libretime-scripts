@@ -1,7 +1,7 @@
 from sys import platform
 
 if platform == 'darwin':
-    BASE_MEDIA_DIR = "/Users/livestream/Downloads/"
+    BASE_MEDIA_DIR = "/Users/keoni/Downloads/"
     MD5_CMD = "md5"
     CONF_FILE = "/etc/librescripts/conf.json"
 else:
