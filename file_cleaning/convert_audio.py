@@ -10,14 +10,8 @@ from subprocess import Popen, PIPE, call
 
 # m4a doesn't allow a language tag.
 BAD_FORMATS = 'wav mpg wave aiff'
-
 CONF_FILE = "/etc/librescripts/conf.json"
-# ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
-ROOT_FOLDER = "/Volumes/Te Hiku Radio Database/"
-# ROOT_FOLDER = "/Volumes/Sunshine_Radio_Database/"
-LOGFILE= "/var/log/librescripts/update_metadata.log"
-
-ROOT_FOLDER = "/Users/livestream/Resilio Sync/Te Hiku Radio Database/"
+LOGFILE = "/var/log/librescripts/update_metadata.log"
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
@@ -33,7 +27,8 @@ try:
     f.close()
     ROOT_FOLDERS = d['search_folders']
 except KeyError as e:
-    logging.error('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
+    logging.error(
+        'Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
 except Exception as e:
     logging.error('Could not read configuration file {0}.'.format(CONF_FILE))
@@ -48,7 +43,7 @@ def scan_folder(ROOT_FOLDER):
             extension = name.split('.')[-1].lower()
             FILE_PATH = os.path.join(root, name)
 
-            if '.' is name[0]:
+            if '.' == name[0]:
                 logging.debug('Skipping {0}'.format(name))
                 continue
             elif '~' in root:
@@ -57,15 +52,22 @@ def scan_folder(ROOT_FOLDER):
                 continue
             elif '.sync' in root:
                 continue
+            elif '.rslsa' in name:
+                if name.split('.')[-2].lower() in BAD_FORMATS:
+                    logging.warning(
+                        f'You need to sync this file to convert it: {FILE_PATH}'
+                    )
+                continue
             elif extension not in 'mp3 mp4 m4a flac wav ogg mpg':
                 logging.debug('Skipping {0}'.format(name))
                 continue
-            
+
             NUM_FILES = NUM_FILES + 1
 
             if extension in BAD_FORMATS:
-                logging.info("Converting {0} to mp3".format(FILE_PATH.encode('utf-8')))
-                
+
+                logging.info("Converting {0} to mp3".format(
+                    FILE_PATH.encode('utf-8')))
 
                 out_file = name.split('.')
                 out_file[-1] = 'mp3'
@@ -73,15 +75,17 @@ def scan_folder(ROOT_FOLDER):
                 cmd = [
                     'ffmpeg', '-y', '-v', 'quiet',
                     '-i', FILE_PATH,
-                    '-c:a', 'libmp3lame', '-q:a', '0', os.path.join(root, out_file)
+                    '-c:a', 'libmp3lame', '-q:a', '0', os.path.join(
+                        root, out_file)
                 ]
 
                 # logging.info(cmd)
                 p = Popen(cmd, stdout=PIPE, stderr=PIPE)
                 out, err = p.communicate()
-                
+
                 if os.path.exists(FILE_PATH):
-                    logging.info("Converted {0} -> {1}".format(name.encode('utf-8'), out_file.encode('utf-8')))
+                    logging.info(
+                        "Converted {0} -> {1}".format(name.encode('utf-8'), out_file.encode('utf-8')))
                     CON_FILES = CON_FILES + 1
 
                     # Move old file to #Trash
@@ -98,12 +102,11 @@ def scan_folder(ROOT_FOLDER):
                     call(['mv', FILE_PATH, mv_path])
 
                 else:
-                    logging.warning("Did not convert {0}".format(name.encode('utf-8')))
+                    logging.warning(
+                        "Did not convert {0}".format(name.encode('utf-8')))
 
-            
-        
-
-    logging.info("Converted {0}/{1} files in {2}".format(CON_FILES, NUM_FILES, ROOT_FOLDER))
+    logging.info(
+        "Converted {0}/{1} files in {2}".format(CON_FILES, NUM_FILES, ROOT_FOLDER))
 
 
 def main():
