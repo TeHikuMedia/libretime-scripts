@@ -2,7 +2,7 @@
 
 import mutagen
 import argparse
-
+import re
 from datetime import datetime, timedelta
 import pytz
 from subprocess import Popen, PIPE
@@ -93,6 +93,17 @@ def get_waatea_hour(hour):
     get_waatea(time)
 
 
+def filter_file(file_name, xml_data, hour, ampm):
+    results = re.findall(r'<title>(.*)</title>', xml_data)
+    if results:
+        title = results[0]
+        if 'WAATEA' in title:
+            search = re.escape(str(hour)) + r'\.(.*)' + re.escape(ampm) + 'm'
+            match = re.findall(search, title)
+            if match:
+                return file_name
+
+
 def get_waatea(time):
     hour = int(time.strftime('%I'))  # always want to get an hour ahead!
     ampm = time.strftime('%p').split('M')[0].lower()
@@ -102,13 +113,19 @@ def get_waatea(time):
     ftp = FTP('ftp.irirangi.net')
     ftp.login('NGWAN_Upload', 'ngwanupload')
     ftp.cwd('MP3_News')
-    items = []
-    ftp.retrlines('RETR file_ids.txt', lambda x: items.append(x)).split('\n')
 
     f_id = ''
+    chosen = []
+    items = []
+    ftp.retrlines('NLST', lambda x: items.append(x))
     for item in items:
-        if 'news sport %s%s' % (hour, ampm) in item:
-            f_id = item.split(' ')[0].strip()
+        if 'xml' in item:
+            ftp.retrlines(f'RETR {item}', lambda x: chosen.append(
+                filter_file(item, x, hour, ampm)))
+    chosen = [i.replace('.xml', '') for i in chosen if i is not None]
+    if chosen:
+        f_id = chosen[0]
+
     if f_id == '':
         print("No News for this Hour")
         return
