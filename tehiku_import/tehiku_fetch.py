@@ -23,10 +23,10 @@ with open(CONF_FILE, 'rb') as file:
     try:
         d = json.loads(file.read())
         TOKEN = d['app_token']
-    except KeyError as e:
+    except KeyError:
         print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
         raise
-    except Exception as e:
+    except Exception:
         print('Could not read configuration file {0}.'.format(CONF_FILE))
         raise
 
@@ -52,7 +52,10 @@ parser.add_argument("-t", "--target-length",
                     help="Duration in seconds that the file should be")
 parser.add_argument(
     "-x", "--delete", help="Delete files that match.", action="store_true")
-
+parser.add_argument(
+    "-g", "--ignore", help="Ignore publish date, just download!",
+    action="store_false"
+)
 args = parser.parse_args()
 
 timezone = pytz.timezone("Pacific/Auckland")
@@ -109,7 +112,7 @@ def get_root_dir():
 
 def get_item_from_collection(
         collection, num_items=40, expire=7, ampm=False, daily=False,
-        label='', duration=None, delete=False):
+        label='', duration=None, delete=False, ignore=False):
 
     ROOT_DIR = get_root_dir()
 
@@ -117,7 +120,12 @@ def get_item_from_collection(
 
     r = requests.get(collection_url)
     collection = r.json()
-    URI = f"{BASE_API_URL}collections/{collection['id']}/publications/?limit=40"
+    if ignore:
+        # This API shows unpublished content
+        URI = f"{BASE_API_URL}publications/?collection={collection['id']}&limit=40"
+    else:
+        # This shows only published content
+        URI = f"{BASE_API_URL}collections/{collection['id']}/publications/?limit=40"
     r = requests.get(
         URI,
         headers=HEADERS
@@ -154,24 +162,27 @@ def get_item_from_collection(
                 local_time.strftime('%A')])
         else:
             file_name = "tehiku_{0}_{1}".format(collection['id'], pub_id)
-        print(file_name)
 
         extension = 'None'
         try:
-            file_url = publication['media'][0]['media_file']
+            if 'MP3' in publication['media'][0]['versions'].keys():
+                file_url = publication['media'][0]['versions']['MP3']['media_file']
+            elif 'ACP' in publication['media'][0]['versions'].keys():
+                file_url = publication['media'][0]['versions']['ACP']['media_file']
+            else:
+                file_url = publication['media'][0]['media_file']
             extension = file_url.split('.')[-1]
             if extension not in 'mp4 m4a mp3 wav ogg aiff':
                 # What about video files?
                 print('Not an audio file.')
                 continue
-        except:
+        except Exception:
             print('No media file, skipping.')
             continue
-        file_extension = file_url.split('.')[-1]
 
+        file_extension = file_url.split('.')[-1]
         file_path = os.path.join(
             ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
-
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
 
@@ -179,7 +190,6 @@ def get_item_from_collection(
             converted_file = '.'.join(file_path.split('.')[0:-1])+'.mp3'
             if os.path.isfile(converted_file):
                 file_path = converted_file
-
         if os.path.isfile(file_path):
             # Check if we should delete it
             if now - publish_date > timedelta(days=expire) or delete:
@@ -211,61 +221,70 @@ def get_item_from_collection(
                 print('Strange edge case')
                 continue
         else:
-            if now - publish_date < timedelta(days=expire) and not delete:
+            if (
+                (now - publish_date < timedelta(days=expire) and not delete)
+                or (ignore and not delete)
+            ):
                 DOWNLOAD = True
 
         if DOWNLOAD:
-            ntf = NamedTemporaryFile(delete=False, suffix=f'.{extension}')
-            tmp_file = ntf.name
 
-            cmd = ['curl', '-s', '-L', file_url, '-o', tmp_file]
-            p = Popen(cmd, stdin=PIPE, stdout=PIPE)
-            output, error = p.communicate()
-            if error:
-                print("Could not download file")
+            with NamedTemporaryFile(delete=False, suffix=f'.{extension}') as tmp_file:
+                with requests.get(file_url, stream=True) as r:
+                    r.raise_for_status()
+                    with open(tmp_file.name, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=2048):
+                            f.write(chunk)
 
-            if extension not in 'flac mp3':
-                # Convert to mp3
-                tmp_file = convert_audio(tmp_file)
+                tmp_file = tmp_file.name
 
-            if duration:
-                scale_media(tmp_file, duration)
+                if extension not in 'mp3':
+                    # Convert to mp3
+                    tmp_file = convert_audio(tmp_file)
 
-            p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-            p.communicate()
-            p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-            p.communicate()
+                if duration:
+                    scale_media(tmp_file, duration)
 
-            fd = mutagen.File(tmp_file, easy=True)
+                p = Popen(['chown', 'www-data', tmp_file],
+                          stdin=PIPE, stdout=PIPE)
+                p.communicate()
+                p = Popen(['chgrp', 'www-data', tmp_file],
+                          stdin=PIPE, stdout=PIPE)
+                p.communicate()
 
-            try:
-                fd.tags['DATE'] = publish_date.strftime('%Y')
-            except:
-                pass
-            try:
-                fd.tags['Title'] = publication['headline']
-            except:
-                pass
-            try:
-                fd.tags['Language'] = publication['media'][0]['primary_language']
-            except:
-                pass
-            fd.tags['Album'] = collection['name']
-            fd.tags['Artist'] = "Te Hiku Media"
-            if label:
-                fd.tags['Organization'] = label
-            fd.tags['Genre'] = "Whare Kōrero"
-            fd.save()
+                fd = mutagen.File(tmp_file, easy=True)
 
-            # Try to embed picture
-            # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
-            add_artwork(publication['image']['thumb_small'], tmp_file)
+                try:
+                    fd.tags['DATE'] = publish_date.strftime('%Y')
+                except Exception:
+                    pass
+                try:
+                    fd.tags['Title'] = publication['headline']
+                except Exception:
+                    pass
+                try:
+                    fd.tags['Language'] = publication['media'][0]['primary_language']
+                except Exception:
+                    pass
+                fd.tags['Album'] = collection['name']
+                fd.tags['Artist'] = "Te Hiku Media"
+                if label:
+                    fd.tags['Organization'] = label
+                fd.tags['Genre'] = "Whare Kōrero"
+                fd.save()
+
+                # Try to embed picture
+                # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
+                add_artwork(
+                    publication['image']
+                    ['thumb_small'], tmp_file, 'resizetofit'
+                )
 
             # Finally move the file to where it needs to be
             Popen(['mv', tmp_file, file_path])
     # Now remove items that are older (file system date) than the expire
     for file_path in glob(f"{ROOT_DIR}/tehiku_{collection['id']}_*"):
-        print(file_path)
+
         file_timestamp = pytz.utc.localize(
             datetime.utcfromtimestamp(os.path.getmtime(file_path))
         )
@@ -316,7 +335,8 @@ def main():
                 daily=args.daily,
                 duration=DURATION,
                 label=label,
-                delete=args.delete)
+                delete=args.delete,
+                ignore=args.ignore)
     else:
         print("Must specify collection name.")
 

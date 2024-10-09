@@ -1,7 +1,7 @@
 # CRON JOBS FOR TE HIKU FM CONTENT
 */15,56-59 5-19 * * *	root	/usr/local/bin/waatea-fetch > /tmp/cron.waatea.log
-*/11 7-19 * * *	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 -l Interview > /tmp/cron.interviews.log
+*/11 7-19 * * *	root	/usr/local/bin/tehiku-fetch -c kuaka-marangaranga,te-reo-o-te-rangatira,taumatahanga -r 7 -l Interview -g > /tmp/cron.interviews.log
 */12 7-19 * * *	root	/usr/local/bin/tehiku-fetch -c panui -d -l Pānui -n 2 > /tmp/cron.daily.log
 */13 7-10 * * *	root	/usr/local/bin/tehiku-fetch -c nga-tohu -d -l 'Ngā Tohu' -n 2 > /tmp/cron.daily.log
-*/15,26-29 5-16 * * *	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News -n 4 > /tmp/cron.ampm.log
-*/12 16-19 * * *	root	/usr/local/bin/tehiku-fetch -c something-for-the-people -d -l SFTP -n 1 > /tmp/cron.daily.log
+*/15,26-29 5-16 * * *	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News -n 4 -g > /tmp/cron.ampm.log
+*/12 16-19 * * *	root	/usr/local/bin/tehiku-fetch -c something-for-the-people -d -l SFTP -n 1 -g > /tmp/cron.daily.log
