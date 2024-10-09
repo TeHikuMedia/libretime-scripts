@@ -229,7 +229,7 @@ def get_item_from_collection(
 
         if DOWNLOAD:
 
-            with NamedTemporaryFile(delete=True, suffix=f'.{extension}') as tmp_file:
+            with NamedTemporaryFile(delete=False, suffix=f'.{extension}') as tmp_file:
                 with requests.get(file_url, stream=True) as r:
                     r.raise_for_status()
                     with open(tmp_file.name, 'wb') as f:
