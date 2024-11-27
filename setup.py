@@ -12,11 +12,11 @@ os.chdir(script_path)
 
 data_files = [
     ('/etc/librescripts',     ['install/conf/conf.json']),
-    #('/etc/cron.d',           ['install/cron/update_metadata']),
+    # ('/etc/cron.d',           ['install/cron/update_metadata']),
     ('/etc/init.d', [
         'install/sysvinit/schedule_stream_target',
     ]),
-    ('/etc/init',[
+    ('/etc/init', [
         'install/upstart/schedule_stream_target.conf'
     ]),
     ('/etc/cron.d', [
@@ -25,19 +25,21 @@ data_files = [
     ]),
 ]
 
-LOG_DIR  = '/var/log/librescripts'
+LOG_DIR = '/var/log/librescripts'
 LOG_FILE = os.path.join(LOG_DIR, 'update_metadata.log')
 # Make sure log directory exists
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
-    os.chmod(LOG_DIR, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+    os.chmod(LOG_DIR, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+             stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
     uid = pwd.getpwnam("www-data").pw_uid
     gid = grp.getgrnam("www-data").gr_gid
     os.chown(LOG_DIR, uid, gid)
 
 if not os.path.exists(LOG_FILE):
     open(LOG_FILE, 'a').close()
-    os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+    os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR |
+             stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
 conf_dict = read_configuration("setup.cfg")
 
@@ -81,4 +83,5 @@ for file in conf_dict['options']['data_files']:
             file_path = os.path.join(path, file_name)
             print('Modifying {0}'.format(file_path))
             # call(['chmod', '644', file_path])
-            os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+            os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR |
+                     stat.S_IRGRP | stat.S_IROTH)

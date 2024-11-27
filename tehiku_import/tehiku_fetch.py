@@ -1,10 +1,8 @@
 import mutagen
-from mutagen.id3 import ID3, APIC
 import requests
 from datetime import datetime, timedelta
 import time
 import pytz
-from math import floor
 import json
 from glob import glob
 import re
@@ -12,10 +10,12 @@ from subprocess import Popen, PIPE
 import argparse
 import os
 import sys
+from urllib.parse import urlparse
+from os.path import splitext
 from tempfile import NamedTemporaryFile
 
 from tehiku_import.import_functions import scale_media
-from tehiku_import.settings import BASE_MEDIA_DIR, MD5_CMD, CONF_FILE
+from tehiku_import.settings import BASE_MEDIA_DIR, CONF_FILE
 from tehiku_import.add_artwork import add_artwork
 
 # Load Configuration
@@ -133,6 +133,7 @@ def get_item_from_collection(
     d = r.json()
     publications = d['results']
     # Use watch for files with metadata. Use store to keep original file hashes
+    print(d)
     count = 0
     while count < num_items:
         count = count + 1
@@ -171,7 +172,9 @@ def get_item_from_collection(
                 file_url = publication['media'][0]['versions']['ACP']['media_file']
             else:
                 file_url = publication['media'][0]['media_file']
-            extension = file_url.split('.')[-1]
+            parsed = urlparse(file_url)
+            _, extension = splitext(parsed.path)
+            extension = extension.replace('.', '')
             if extension not in 'mp4 m4a mp3 wav ogg aiff':
                 # What about video files?
                 print('Not an audio file.')
