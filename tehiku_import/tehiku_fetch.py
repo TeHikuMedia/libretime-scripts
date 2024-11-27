@@ -66,7 +66,6 @@ def convert_audio(file_path):
     outfile = '.'.join(file_path.split('.')[:-1])+'.mp3'
     cmd = ['ffmpeg', '-y', '-i', file_path, '-c:a',
            'libmp3lame', '-b:a', '192k', outfile]
-    print(cmd)
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     Popen(['rm', file_path])
@@ -133,7 +132,6 @@ def get_item_from_collection(
     d = r.json()
     publications = d['results']
     # Use watch for files with metadata. Use store to keep original file hashes
-    print(d)
     count = 0
     while count < num_items:
         count = count + 1
