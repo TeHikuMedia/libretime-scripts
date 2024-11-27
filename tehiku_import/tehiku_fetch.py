@@ -181,7 +181,9 @@ def get_item_from_collection(
             print('No media file, skipping.')
             continue
 
-        file_extension = file_url.split('.')[-1]
+        parsed = urlparse(file_url)
+        _, extension = splitext(parsed.path)
+        file_extension = extension.replace('.', '')
         file_path = os.path.join(
             ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
         now = pytz.utc.localize(datetime.utcnow())
