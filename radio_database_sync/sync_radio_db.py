@@ -62,7 +62,10 @@ def calculate_md5(file_path):
 def scan_folder(ROOT_FOLDER, db={}):
     NUM_FILES = 0
     spinner = itertools.cycle(['-', '/', '|', '\\'])
+    exclude = set(['.sync', '#recycle'])
     for root, dirs, files in os.walk(ROOT_FOLDER):
+        dirs[:] = [d for d in dirs if d not in exclude]
+
         for name in files:
             NUM_FILES = NUM_FILES + 1
 
