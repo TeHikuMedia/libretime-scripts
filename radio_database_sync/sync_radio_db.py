@@ -1,4 +1,5 @@
 import datetime
+import itertools
 import mimetypes
 import os
 import re
@@ -60,8 +61,8 @@ def calculate_md5(file_path):
 
 def scan_folder(ROOT_FOLDER, db={}):
     NUM_FILES = 0
+    spinner = itertools.cycle(['-', '/', '|', '\\'])
     for root, dirs, files in os.walk(ROOT_FOLDER):
-
         for name in files:
             NUM_FILES = NUM_FILES + 1
 
@@ -72,7 +73,10 @@ def scan_folder(ROOT_FOLDER, db={}):
             ]):
                 logging.debug('Skipping {0}'.format(name))
                 continue
-
+            print(
+                f"\r\033[K{next(spinner)} Scanning {ROOT_FOLDER}: {NUM_FILES}",
+                flush=True, end=''
+            )
             parts = root.split('/')
 
             RELATIVE = root.split(ROOT_FOLDER)[1]
@@ -270,7 +274,6 @@ def load_radio_db():
     for file in files:
         if file['md5'] in data.keys():
             logging.warning(f"Duplicated: {file['name']}")
-            print(f"Duplicated: {file['name']}")
             if any(
                 [
                     file[key].find('#') > -1
@@ -311,7 +314,7 @@ def update_file(file_id, kwargs):
 
 
 def delete_file(file_id, SESSION_ID):
-    API_URL = "{LIBRETIME_URL}/library/delete"
+    API_URL = f"{LIBRETIME_URL}/library/delete"
     raw_data = \
         f"format=json&media%5B0%5D%5Bid%5D={file_id}&media%5B0%5D%5Btype%5D=audioclip"
     session = requests.Session()
@@ -351,7 +354,7 @@ def delete_file(file_id, SESSION_ID):
 
 
 def upload_file(file_path):
-    API_URL = "{LIBRETIME_URL}/rest/media"
+    API_URL = f"{LIBRETIME_URL}/rest/media"
     filename = file_path.split('/')[-1]
     try:
         with open(file_path, 'rb') as file:
@@ -380,7 +383,7 @@ def sync_entire_folder():
     REQUIRED = ['mime', 'accessed', 'name', 'size']
 
     libretime_db = load_radio_db()
-    print(f"Loaded {len(libretime_db)} files from libretime\n")
+    print(f"Loaded {len(libretime_db)} files from libretime")
 
     # Check files in libretime and delete
     for md5 in libretime_db.keys():
@@ -574,14 +577,8 @@ def process_path(path):
 
 class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
-    def __init__(
-        self, *, regexes, ignore_regexes, ignore_directories, case_sensitive
-    ):
-        super().__init__(
-            regexes=regexes, ignore_regexes=ignore_regexes,
-            ignore_directories=ignore_directories,
-            case_sensitive=case_sensitive
-        )
+    def __init__(self, *args, **kwargs):
+        super(MyRegexMatchingEventHandler, self).__init__(*args, **kwargs)
 
         self.session_id = login_playwright()
         self.db = self.load_radio_db()
@@ -591,7 +588,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         self.db = self.load_radio_db()
 
     def load_radio_db(self):
-        API_URL = "{LIBRETIME_URL}/api/v2/files"
+        API_URL = f"{LIBRETIME_URL}/api/v2/files"
         response = requests.get(
             API_URL, auth=LIBRETIME_BASIC_AUTH
         )
