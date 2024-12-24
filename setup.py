@@ -89,7 +89,10 @@ for file in conf_dict['options']['data_files']:
             os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR |
                      stat.S_IRGRP | stat.S_IROTH)
 
-check_call(
-    ['playwright', 'install-deps', 'chromium'],
-    stdout=open(os.devnull, 'wb'), stderr=STDOUT
-)
+try:
+    check_call(
+        ['playwright', 'install-deps', 'chromium'],
+        stdout=open(os.devnull, 'wb'), stderr=STDOUT
+    )
+except Exception:
+    print("Could not install playwright")
