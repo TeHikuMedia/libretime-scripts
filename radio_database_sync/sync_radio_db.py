@@ -27,7 +27,7 @@ try:
     f.close()
 
     LOG_PATH = d.get('log_path', '/var/log/librescripts/')
-    LOGFILE = os.path.join(LOG_PATH, ["sync_radio_db.log"])
+    LOGFILE = os.path.join(LOG_PATH, "sync_radio_db.log")
     ROOT_FOLDERS = d['search_folders']
     LIBRETIME_TITLE = d['libretime']['url']
     LIBRETIME_URL = d['libretime']['url']
