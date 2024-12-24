@@ -18,24 +18,16 @@ from playwright.sync_api import sync_playwright, expect
 
 
 CONF_FILE = "/etc/librescripts/conf.json"
-ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
-ROOT_FOLDER = "/Users/keoni/Resilio Sync/Te Hiku Radio Database"
-LOGFILE = "sync_radio_db.log"
-
-logging.basicConfig(
-    format='%(asctime)s [%(levelname)s]: %(message)s',
-    level=logging.INFO,
-    filename=LOGFILE,
-)
-
 LABEL_KEYS = ['genre', 'language', 'label']
 REQUIRED = ['mime', 'accessed', 'name', 'size']
 
-# Load Configuration
 try:
     f = open(CONF_FILE, 'rb')
     d = json.loads(f.read())
     f.close()
+
+    LOG_PATH = d.get('log_path', '/var/log/librescripts/')
+    LOGFILE = os.path.join(LOG_PATH, ["sync_radio_db.log"])
     ROOT_FOLDERS = d['search_folders']
     LIBRETIME_TITLE = d['libretime']['url']
     LIBRETIME_URL = d['libretime']['url']
@@ -50,6 +42,12 @@ except KeyError:
 except Exception:
     logging.error('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
+
+logging.basicConfig(
+    format='%(asctime)s [%(levelname)s]: %(message)s',
+    level=logging.INFO,
+    filename=LOGFILE,
+)
 
 
 def calculate_md5(file_path):
@@ -731,9 +729,9 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
             self.process_file(data, updated=True)
 
 
-if __name__ == "__main__":
-    print("Initial cleaning")
-    # main()
+def main():
+    print("Startup, sync entire folder.")
+    sync_entire_folder()
     print("Watching")
     event_handler = MyRegexMatchingEventHandler(
         regexes=None,
@@ -754,3 +752,7 @@ if __name__ == "__main__":
     finally:
         observer.stop()
         observer.join()
+
+
+if __name__ == "__main__":
+    main()

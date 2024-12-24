@@ -68,7 +68,8 @@ setup(
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
             "radio-db-actions = radio_database_sync.db_management:main",
             "schedule-stream-target = remote_streams.schedule_stream_target:main",
-            "ingest-youtube = remote_streams.ingest:main"
+            "ingest-youtube = remote_streams.ingest:main",
+            "radio-db-sync-libretime4 = radio_database_sync.sync_radio_db:main"
         ]
     },
     data_files=conf_dict['options']['data_files']
