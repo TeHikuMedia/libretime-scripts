@@ -4,7 +4,7 @@ import stat
 import os
 import pwd
 import grp
-from subprocess import STDOUT, call, check_call
+from subprocess import STDOUT, check_call
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 print(script_path)
@@ -90,6 +90,6 @@ for file in conf_dict['options']['data_files']:
                      stat.S_IRGRP | stat.S_IROTH)
 
 check_call(
-    ['playwright', 'install'],
+    ['playwright', 'install', 'chromium'],
     stdout=open(os.devnull, 'wb'), stderr=STDOUT
 )
