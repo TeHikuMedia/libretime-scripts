@@ -260,7 +260,7 @@ def scan_folder(ROOT_FOLDER, db={}):
 
 def load_radio_db():
     print("Loading Libretime DB")
-    API_URL = "{LIBRETIME_URL}/api/v2/files"
+    API_URL = f"{LIBRETIME_URL}/api/v2/files"
     response = requests.get(
         API_URL, auth=LIBRETIME_BASIC_AUTH
     )
@@ -484,9 +484,10 @@ def login_playwright():
         page.fill('input[name="username"]', LIBRETIME_USER)
         page.fill('input[name="password"]', LIBRETIME_PASSWORD)
         page.click('input[name="submit"]')
-        expect(page).to_have_title(re.compile(
-            LIBRETIME_TITLE
-        ))
+        expect(page).to_have_url(re.compile('.*showbuilder.*'))
+        # to_have_title(re.compile(
+        #     LIBRETIME_TITLE
+        # ))
         # Saving the session state for future use
         context.storage_state(path='session.json')
         SESSION_ID = page.context.cookies()[0]['value']
