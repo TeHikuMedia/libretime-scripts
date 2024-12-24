@@ -90,6 +90,6 @@ for file in conf_dict['options']['data_files']:
                      stat.S_IRGRP | stat.S_IROTH)
 
 check_call(
-    ['playwright', 'install', 'install-deps', 'chromium'],
+    ['playwright', 'install-deps', 'chromium'],
     stdout=open(os.devnull, 'wb'), stderr=STDOUT
 )
