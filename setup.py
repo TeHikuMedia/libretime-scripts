@@ -60,6 +60,8 @@ setup(
         'pyyaml',
         'requests',
         'pytz',
+        'watchdog',
+        'playwright'
     ],
     entry_points={
         "console_scripts": [
