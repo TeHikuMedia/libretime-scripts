@@ -574,9 +574,7 @@ def process_path(path):
 class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
     def __init__(
-            self, *, regexes: list[str] | None = None,
-            ignore_regexes: list[str] | None = None,
-            ignore_directories: bool = False, case_sensitive: bool = False
+        self, *, regexes, ignore_regexes, ignore_directories, case_sensitive
     ):
         super().__init__(
             regexes=regexes, ignore_regexes=ignore_regexes,
