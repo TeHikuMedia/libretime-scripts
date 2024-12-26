@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import itertools
 import mimetypes
@@ -49,6 +50,17 @@ logging.basicConfig(
     level=logging.INFO,
     filename=LOGFILE,
 )
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-w", "--watch",
+    help="Watch the folder.", action="store_true"
+)
+parser.add_argument(
+    "-s", "--sync", help="Sync the folder", action="store_true"
+)
+args = parser.parse_args()
 
 
 def calculate_md5(file_path):
@@ -758,9 +770,13 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
 
 def main():
-    print("Startup, sync entire folder.")
-    # sync_entire_folder()
-    print("Watching")
+
+    if args.sync:
+        print("Sync entire folder.")
+        sync_entire_folder()
+
+    if not args.watch:
+        return
 
     observer = Observer()
     for folder in ROOT_FOLDERS:
