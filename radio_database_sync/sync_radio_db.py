@@ -540,6 +540,8 @@ def process_path(path, root_folder):
     RELATIVE = path.split(root_folder)[1]
     print(RELATIVE)
     parts = RELATIVE.split('/')
+    if parts[0] == '':
+        parts.pop(0)
     print(parts)
 
     SKIP_DIR = False
