@@ -4,6 +4,7 @@ import itertools
 import mimetypes
 import os
 import re
+import sys
 import mutagen
 import logging
 import json
@@ -20,8 +21,15 @@ from playwright.sync_api import sync_playwright, expect
 
 
 CONF_FILE = "/etc/librescripts/conf.json"
-LABEL_KEYS = ['genre', 'language', 'label']
+LABEL_KEYS = ['genre', 'language', 'label', 'library']
 REQUIRED = ['mime', 'accessed', 'name', 'size']
+
+TRACKS = {
+    'stings': {"id": None, "name": 'STING'},
+    'station id': {"id": None, "name": 'ID'},
+    'news': {"id": None, "name": 'NEWS'},
+    'pānui': {"id": None, "name": 'PANUI'},
+}
 
 try:
     f = open(CONF_FILE, 'rb')
@@ -59,6 +67,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "-s", "--sync", help="Sync the folder", action="store_true"
+)
+parser.add_argument(
+    "-v", "--verbose", action="store_true"
 )
 args = parser.parse_args()
 
@@ -140,6 +151,11 @@ def scan_folder(ROOT_FOLDER, db={}):
                     logging.error(e)
                     raise e
 
+            if label.lower() in TRACKS.keys():
+                track_id = TRACKS[label.lower()]['id']
+            else:
+                track_id = None
+
             orig_md5 = calculate_md5(os.path.join(root, name))
             db[orig_md5] = {
                 'path': os.path.join(root, name),
@@ -147,7 +163,8 @@ def scan_folder(ROOT_FOLDER, db={}):
                 'label': label,
                 'language': language,
                 'genre': genre,
-                'name': name.split('.')[0]
+                'name': name.split('.')[0],
+                'library': track_id
             }
 
             try:
@@ -267,16 +284,18 @@ def scan_folder(ROOT_FOLDER, db={}):
 
                         audio.tags['genre'] = g
 
-                if SAVE:
-                    logging.info(
-                        (
-                            u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
-                            .format(name, audio, lang, g, t)
-                        )
-                    )
-                    audio.save()
-                    new_md5 = calculate_md5(os.path.join(root, name))
-                    db[orig_md5]['new_md5'] = new_md5
+                # Let's not do this. Let's just post this data to the database
+                # rather than editing the metadata of the file!
+                # if SAVE:
+                #     logging.info(
+                #         (
+                #             u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
+                #             .format(name, audio, lang, g, t)
+                #         )
+                #     )
+                #     audio.save()
+                #     new_md5 = calculate_md5(os.path.join(root, name))
+                #     db[orig_md5]['new_md5'] = new_md5
                 logging.debug(audio)
 
     logging.info("Scanned {0} files in {1}".format(NUM_FILES, ROOT_FOLDER))
@@ -329,6 +348,27 @@ def load_radio_db():
             data[file['md5']] = file
 
     return data
+
+
+def get_track_type_id(track_type_name):
+    API_URL = f"{LIBRETIME_URL}/api/v2/libraries"
+    response = requests.get(
+        API_URL, auth=LIBRETIME_BASIC_AUTH,
+    )
+    try:
+        response.raise_for_status()
+    except Exception as e:
+        print(e)
+        logging.error(response.text)
+        return None
+    results = response.json()
+    for track in results:
+        if (
+            track_type_name.lower() == track['name'].lower()
+            or track_type_name.lower() == track['code'].lower()
+        ):
+            return track['id']
+    return None
 
 
 def update_file(file_id, kwargs):
@@ -445,21 +485,15 @@ def sync_entire_folder():
             **{key: libretime_db[md5][key] for key in REQUIRED}
         }
 
-        # The file changed, delete the old item and upload the new one
-        if db[md5]['new_md5']:
-            if md5 in libretime_db.keys():
-                try:
-                    print("Upload new & delete old files", db[md5]['name'])
-                    upload_file(db[md5]['path'])
-                    delete_file(libretime_db[md5]['id'], session_id)
-                except Exception:
-                    pass
-            else:
-                print("Upload new file", db[md5]['name'])
-                try:
-                    upload_file(db[md5]['path'])
-                except Exception:
-                    pass
+        # This is a new file
+        if md5 not in libretime_db.keys():
+
+            print("Upload new file", db[md5]['name'])
+            try:
+                upload_file(db[md5]['path'])
+            except Exception:
+                print("Failed to upload file")
+                pass
 
         # Outdated metadata, update
         elif any(
@@ -605,6 +639,12 @@ def process_path(path, root_folder):
         orig_md5 = calculate_md5(path)
     except Exception:
         orig_md5 = None
+
+    if label.lower() in TRACKS.keys():
+        track_id = TRACKS[label.lower()]['id']
+    else:
+        track_id = None
+
     data = {
         'path': path,
         'md5': orig_md5,
@@ -613,6 +653,7 @@ def process_path(path, root_folder):
         'genre': genre,
         'name': name.split('.')[0],
         'fullname': name,
+        'library': track_id
     }
     print(data)
     return data
@@ -771,6 +812,10 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
 def main():
 
+    if args.verbose:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+        logging.getLogger().setLevel(logging.DEBUG)
+
     if args.sync:
         print("Sync entire folder.")
         sync_entire_folder()
@@ -803,4 +848,6 @@ def main():
 
 
 if __name__ == "__main__":
+    for track in TRACKS:
+        TRACKS[track]['id'] = get_track_type_id(TRACKS[track]['name'])
     main()
