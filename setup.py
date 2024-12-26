@@ -44,7 +44,7 @@ if not os.path.exists(LOG_FILE):
     os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR |
              stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
-conf_dict = read_configuration("setup.cfg")
+conf_dict = read_configuration("/etc/librescripts/setup.cfg")
 
 setup(
     name="libretime_scripts",
