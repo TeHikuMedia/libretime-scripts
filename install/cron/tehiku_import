@@ -5,3 +5,4 @@
 */13 7-10 * * *	root	/usr/local/bin/tehiku-fetch -c nga-tohu -d -l 'Ngā Tohu' -n 2 > /tmp/cron.daily.log
 */15,26-29 5-16 * * *	root	/usr/local/bin/tehiku-fetch -c nga-take -a -l News -n 4 -g > /tmp/cron.ampm.log
 */12 16-19 * * *	root	/usr/local/bin/tehiku-fetch -c something-for-the-people -d -l SFTP -n 1 -g > /tmp/cron.daily.log
+0 1 * * *	root	/usr/local/bin/radio-db-sync-libretime4 -s
