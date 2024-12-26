@@ -301,6 +301,17 @@ def load_radio_db():
                 )
                 delete_file(file['id'], session_id)
                 del file['md5']
+            if all([
+                file[key] == data[file['md5']][key] for key in LABEL_KEYS
+            ]):
+                print(
+                    "Delete duplicated file",
+                    file['id'],
+                    file['name'],
+                    [file[key] for key in LABEL_KEYS],
+                )
+                delete_file(file['id'], session_id)
+                del file['md5']
 
         else:
             data[file['md5']] = file
@@ -508,7 +519,7 @@ def login_playwright():
     return SESSION_ID
 
 
-def process_path(path):
+def process_path(path, root_folder):
     '''
     Takes a folder path with our radio database and generates the
     GENRE, LABEL, and LANGUAGE based on the folder structure.
@@ -516,17 +527,20 @@ def process_path(path):
 
     '''
     name = os.path.basename(path)
+    print(name)
+    print(path)
     if any([
         name[0] in "~!#.?",
         '.rslsa' == name[-6:],
         name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg'
     ]):
+        print("returnign???")
         return
 
-    RELATIVE = path.split(path)[1]
-
+    RELATIVE = path.split(root_folder)[1]
+    print(RELATIVE)
     parts = RELATIVE.split('/')
-    parts.pop(0)
+    print(parts)
 
     SKIP_DIR = False
     for part in parts:
@@ -536,6 +550,7 @@ def process_path(path):
                     "Skipping folder {0}:{1}".format(part, name))
                 SKIP_DIR = True
     if SKIP_DIR:
+        print("skipping dir")
         return
 
     try:
@@ -543,6 +558,7 @@ def process_path(path):
     except IndexError:
         logging.warning(
             'File not properly organized: {0}'.format(name))
+        print('file not normlaise')
         return
 
     try:
@@ -551,6 +567,7 @@ def process_path(path):
         language = None
         logging.warning('File not in language folder: {0}'.format(
             os.path.join(RELATIVE, name)))
+        print('no lanugage')
         return
 
     try:
@@ -559,6 +576,7 @@ def process_path(path):
         genre = None
         logging.debug('File not in genre folder: {0}'.format(
             os.path.join(RELATIVE, name)))
+        print('no genrey')
 
     if '#' in path:
         try:
@@ -573,7 +591,7 @@ def process_path(path):
         orig_md5 = calculate_md5(path)
     except Exception:
         orig_md5 = None
-    return {
+    data = {
         'path': path,
         'md5': orig_md5,
         'label': label,
@@ -582,15 +600,18 @@ def process_path(path):
         'name': name.split('.')[0],
         'fullname': name,
     }
+    print(data)
+    return data
 
 
 class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, root_folder, *args, **kwargs):
         super(MyRegexMatchingEventHandler, self).__init__(*args, **kwargs)
 
         self.session_id = login_playwright()
         self.db = self.load_radio_db()
+        self.root_folder = root_folder
 
     def refresh_db(self):
         print('refresh db')
@@ -690,7 +711,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         :type event:
             :class:`DirMovedEvent` or :class:`FileMovedEvent`
         """
-        data = process_path(self._get_path(event))
+        data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, updated=True)
 
@@ -703,7 +724,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
             """
         print("created")
-        data = process_path(self._get_path(event))
+        data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, updated=True)
 
@@ -716,7 +737,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 :class:`DirDeletedEvent` or :class:`FileDeletedEvent`
             """
         print("deleted")
-        data = process_path(self._get_path(event))
+        data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, deleted=True)
 
@@ -729,28 +750,32 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
             """
         print("modified")
-        data = process_path(self._get_path(event))
+        data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, updated=True)
 
 
 def main():
     print("Startup, sync entire folder.")
-    sync_entire_folder()
+    # sync_entire_folder()
     print("Watching")
-    event_handler = MyRegexMatchingEventHandler(
-        regexes=None,
-        ignore_regexes=[
-            r'[\#\!\.]',
-            r'.*DS_Store',
-            r'.*rsls[zadc]',
-            r'.*!sync',
-        ],
-        ignore_directories=True
-    )
+
     observer = Observer()
-    observer.schedule(event_handler, ROOT_FOLDERS[0], recursive=True)
+    for folder in ROOT_FOLDERS:
+        event_handler = MyRegexMatchingEventHandler(
+            root_folder=folder,
+            regexes=None,
+            ignore_regexes=[
+                r'[\#\!\.]',
+                r'.*DS_Store',
+                r'.*rsls[zadc]',
+                r'.*!sync',
+            ],
+            ignore_directories=True
+        )
+        observer.schedule(event_handler, folder, recursive=True)
     observer.start()
+
     try:
         while observer.is_alive():
             observer.join(1)
