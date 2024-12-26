@@ -9,3 +9,5 @@ tmp*
 *.mp4
 *.pyc
 *.jpg
+session.json
+
