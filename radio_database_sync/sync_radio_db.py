@@ -30,6 +30,7 @@ TRACKS = {
     'station id': {"id": None, "name": 'ID'},
     'news': {"id": None, "name": 'NEWS'},
     'pānui': {"id": None, "name": 'PANUI'},
+    'ads': {"id": None, "name": 'AD'},
 }
 
 try:
@@ -323,7 +324,7 @@ def load_radio_db():
             if any(
                 [
                     file[key].find('#') > -1
-                    for key in LABEL_KEYS if file[key]
+                    for key in LABEL_KEYS[:3] if file[key]
                 ] +
                 [any([
                     file[key] == ''
@@ -457,9 +458,6 @@ def upload_file(file_path):
 def sync_entire_folder():
     db = {}
     session_id = login_playwright()
-    KEYS = ['genre', 'language', 'label']
-    REQUIRED = ['mime', 'accessed', 'name', 'size']
-
     libretime_db = load_radio_db()
     print(f"Loaded {len(libretime_db)} files from libretime")
 
@@ -467,13 +465,13 @@ def sync_entire_folder():
     for md5 in libretime_db.keys():
         if any([
             libretime_db[md5][key].find('#') > -1
-            for key in KEYS if libretime_db[md5][key]
+            for key in LABEL_KEYS[:3] if libretime_db[md5][key]
         ]):
             print(
                 "Delete stale file",
                 libretime_db[md5]['id'],
                 libretime_db[md5]['name'],
-                [libretime_db[md5][key] for key in KEYS],
+                [libretime_db[md5][key] for key in LABEL_KEYS],
 
             )
             delete_file(libretime_db[md5]['id'], session_id)
@@ -485,30 +483,19 @@ def sync_entire_folder():
 
     exists = (db.keys() & libretime_db.keys())
     for md5 in exists:
-
         payload = {
-            **{key: db[md5][key] for key in KEYS},
+            **{key: db[md5][key] for key in LABEL_KEYS},
             **{key: libretime_db[md5][key] for key in REQUIRED}
         }
 
-        # This is a new file
-        if md5 not in libretime_db.keys():
-
-            print("Upload new file", db[md5]['name'])
-            try:
-                upload_file(db[md5]['path'])
-            except Exception:
-                print("Failed to upload file")
-                pass
-
         # Outdated metadata, update
-        elif any(
+        if any(
             libretime_db[md5][i] != db[md5][i]
-            for i in KEYS
+            for i in LABEL_KEYS
         ):
             print('Data outdated')
             payload = {
-                **{key: db[md5][key] for key in KEYS},
+                **{key: db[md5][key] for key in LABEL_KEYS},
                 **{key: libretime_db[md5][key] for key in REQUIRED}
             }
             payload['name'] = (
@@ -529,7 +516,7 @@ def sync_entire_folder():
 
         # Delete files with # in our tags
         elif any([
-            db[md5][key].find('#') > -1 for key in KEYS[:3] if db[md5][key]
+            db[md5][key].find('#') > -1 for key in LABEL_KEYS[:3] if db[md5][key]
         ]):
             print(
                 "Delete file, it has a # in its name",
@@ -541,7 +528,7 @@ def sync_entire_folder():
     new = (set(db.keys()) - set(libretime_db.keys()))
     for md5 in new:
         if any([
-            db[md5][key].find('#') > -1 for key in KEYS[:3] if db[md5][key]
+            db[md5][key].find('#') > -1 for key in LABEL_KEYS[:3] if db[md5][key]
         ]):
             continue
         else:
