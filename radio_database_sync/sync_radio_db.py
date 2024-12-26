@@ -168,12 +168,16 @@ def scan_folder(ROOT_FOLDER, db={}):
                         audio = mutagen.File(file_path, easy=True)
                     except Exception:
                         logging.warning(
-                            'Could not load file with mutagen after conversion: {0}'.format(name))
+                            'Could not load file with mutagen after conversion: {0}'
+                            .format(name)
+                        )
                         continue
 
                     if not audio:
                         logging.warning(
-                            'Attempting to add tags so we can use "easy": {0}'.format(name))
+                            'Attempting to add tags so we can use "easy": {0}'
+                            .format(name)
+                        )
 
                         if extension.lower() in 'mp3':
                             audio = ID3(file_path, translate=False)
@@ -253,8 +257,10 @@ def scan_folder(ROOT_FOLDER, db={}):
 
                 if SAVE:
                     logging.info(
-                        (u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
-                            .format(name, audio, lang, g, t))
+                        (
+                            u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
+                            .format(name, audio, lang, g, t)
+                        )
                     )
                     audio.save()
                     new_md5 = calculate_md5(os.path.join(root, name))
@@ -505,7 +511,7 @@ def login_playwright():
 def process_path(path):
     '''
     Takes a folder path with our radio database and generates the
-    GENRE, LABEL, and LANGUAGE based on the folder structure. 
+    GENRE, LABEL, and LANGUAGE based on the folder structure.
     Returns that metadata.
 
     '''
@@ -517,7 +523,7 @@ def process_path(path):
     ]):
         return
 
-    RELATIVE = path.split(ROOT_FOLDER)[1]
+    RELATIVE = path.split(path)[1]
 
     parts = RELATIVE.split('/')
     parts.pop(0)
