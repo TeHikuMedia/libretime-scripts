@@ -18,6 +18,7 @@ from subprocess import Popen, PIPE
 from watchdog.observers import Observer
 from watchdog.events import RegexMatchingEventHandler
 from playwright.sync_api import sync_playwright, expect
+from logging.handlers import TimedRotatingFileHandler
 
 
 CONF_FILE = "/etc/librescripts/conf.json"
@@ -53,12 +54,16 @@ except Exception:
     logging.error('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
 
+handler = TimedRotatingFileHandler(
+    filename=LOGFILE, when='D', interval=30, backupCount=3, encoding='utf-8',
+    delay=False
+)
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
     level=logging.INFO,
-    filename=LOGFILE,
+    # filename=LOGFILE,
+    handlers=(handler,)
 )
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -108,7 +113,8 @@ def scan_folder(ROOT_FOLDER, db={}):
             RELATIVE = root.split(ROOT_FOLDER)[1]
 
             parts = RELATIVE.split('/')
-            parts.pop(0)
+            if parts[0] == '':
+                parts.pop(0)
 
             SKIP_DIR = False
             for part in parts:
