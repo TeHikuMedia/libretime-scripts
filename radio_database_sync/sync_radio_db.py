@@ -5,6 +5,7 @@ import mimetypes
 import os
 import re
 import sys
+from time import sleep
 import mutagen
 import logging
 import json
@@ -525,6 +526,7 @@ def sync_entire_folder():
             delete_file(libretime_db[md5]['id'], session_id)
 
     # New files not in db.
+    should_resync = False
     new = (set(db.keys()) - set(libretime_db.keys()))
     for md5 in new:
         if any([
@@ -532,8 +534,14 @@ def sync_entire_folder():
         ]):
             continue
         else:
-            print("Upload new file", db[md5]['name'])
-            upload_file(db[md5]['path'])
+            logging.info("Upload new file", db[md5]['name'])
+            status = upload_file(db[md5]['path'])
+            if status == 201:
+                # Now update the file
+                should_resync = True
+
+    if should_resync:
+        return sync_entire_folder()
 
 
 def login_playwright():
@@ -734,8 +742,13 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 payload
             )
         elif not deleted:
-            print("Uploading new file")
+            logging.info("Uploading new file")
             status = upload_file(new_data['path'])
+            if status == 201:
+                # Now update the file
+                sleep(5)
+                self.refresh_db()
+                self.process_file(new_data, updated=True)
 
         if status >= 401:
             self.session_id = login_playwright()
