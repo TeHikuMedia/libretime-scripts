@@ -826,6 +826,7 @@ def main():
                 r'.*DS_Store',
                 r'.*rsls[zadc]',
                 r'.*!sync',
+                r'\.fsprobe'
             ],
             ignore_directories=True
         )

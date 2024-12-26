@@ -23,6 +23,7 @@ with open(CONF_FILE, 'rb') as file:
     try:
         d = json.loads(file.read())
         TOKEN = d['app_token']
+        BASE_MEDIA_DIR = d.get('wharekōrero_root_dir', BASE_MEDIA_DIR)
     except KeyError:
         print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
         raise
@@ -98,8 +99,10 @@ def hash_exists(md5):
     return False
 
 
-def get_root_dir():
-    ROOT_DIR = os.path.join(BASE_MEDIA_DIR, 'whare_korero')
+def get_root_dir(label=''):
+    if label == '':
+        label = 'Whare Kōrero'
+    ROOT_DIR = os.path.join(BASE_MEDIA_DIR, label)
     if not os.path.exists(ROOT_DIR):
         os.mkdir(ROOT_DIR)
         p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
@@ -109,11 +112,22 @@ def get_root_dir():
     return ROOT_DIR
 
 
+def get_pub_folder(root, genre, language):
+    FOLDER = os.path.join(root, language, genre)
+    if not os.path.exists(FOLDER):
+        os.makedirs(FOLDER, exist_ok=True)
+        p = Popen(['chown', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chgrp', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+    return FOLDER
+
+
 def get_item_from_collection(
         collection, num_items=40, expire=7, ampm=False, daily=False,
         label='', duration=None, delete=False, ignore=False):
 
-    ROOT_DIR = get_root_dir()
+    ROOT_DIR = get_root_dir(label)
 
     collection_url = 'https://tehiku.nz/api/?collection={0}'.format(collection)
 
@@ -164,7 +178,13 @@ def get_item_from_collection(
 
         extension = 'None'
         try:
-            if 'MP3' in publication['media'][0]['versions'].keys():
+            parsed = urlparse(publication['media'][0]['media_file'])
+            _, extension = splitext(parsed.path)
+            extension = extension.replace('.', '')
+
+            if extension.lower() in ['mp3', 'wav']:
+                file_url = publication['media'][0]['media_file']
+            elif 'MP3' in publication['media'][0]['versions'].keys():
                 file_url = publication['media'][0]['versions']['MP3']['media_file']
             elif 'ACP' in publication['media'][0]['versions'].keys():
                 file_url = publication['media'][0]['versions']['ACP']['media_file']
@@ -184,8 +204,22 @@ def get_item_from_collection(
         parsed = urlparse(file_url)
         _, extension = splitext(parsed.path)
         file_extension = extension.replace('.', '')
+
+        if len(publication['languages']) > 1:
+            LANGUAGE = ', '.join(
+                i['name'] for i in publication['languages']
+            )
+        elif len(publication['languages']) == 1:
+            LANGUAGE = publication['languages'][0]['name']
+        else:
+            LANGUAGE = 'None'
+        GENRE = collection['name']
+        FOLDER = get_pub_folder(ROOT_DIR, GENRE, LANGUAGE)
+
         file_path = os.path.join(
-            ROOT_DIR, "{0}.{1}".format(file_name, file_extension))
+            FOLDER, "{0}.{1}".format(file_name, file_extension)
+        )
+
         now = pytz.utc.localize(datetime.utcnow())
         # Check if file exists
 
@@ -232,7 +266,7 @@ def get_item_from_collection(
 
         if DOWNLOAD:
 
-            with NamedTemporaryFile(delete=False, suffix=f'.{extension}') as tmp_file:
+            with NamedTemporaryFile(delete=False, suffix=f'.{file_extension}') as tmp_file:
                 with requests.get(file_url, stream=True) as r:
                     r.raise_for_status()
                     with open(tmp_file.name, 'wb') as f:
@@ -241,7 +275,7 @@ def get_item_from_collection(
 
                 tmp_file = tmp_file.name
 
-                if extension not in 'mp3':
+                if file_extension != 'mp3':
                     # Convert to mp3
                     tmp_file = convert_audio(tmp_file)
 
@@ -279,14 +313,14 @@ def get_item_from_collection(
                 # Try to embed picture
                 # https://stackoverflow.com/questions/37897801/embedding-album-cover-in-mp4-file-using-mutagen
                 add_artwork(
-                    publication['image']
-                    ['thumb_small'], tmp_file, 'resizetofit'
+                    publication['image']['thumb_small'],
+                    tmp_file, 'resizetofit'
                 )
 
             # Finally move the file to where it needs to be
             Popen(['mv', tmp_file, file_path])
     # Now remove items that are older (file system date) than the expire
-    for file_path in glob(f"{ROOT_DIR}/tehiku_{collection['id']}_*"):
+    for file_path in glob(f"{ROOT_DIR}/*{collection['id']}*"):
 
         file_timestamp = pytz.utc.localize(
             datetime.utcfromtimestamp(os.path.getmtime(file_path))
