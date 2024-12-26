@@ -23,6 +23,9 @@ data_files = [
         'install/cron/tehiku_import',
         'install/cron/update_metadata'
     ]),
+    ('/etc/systemd/system', [
+        'install/systemd/sync-radio-db.service',
+    ]),
 ]
 
 LOG_DIR = '/var/log/librescripts'
