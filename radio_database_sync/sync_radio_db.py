@@ -78,6 +78,12 @@ parser.add_argument(
 parser.add_argument(
     "-v", "--verbose", action="store_true"
 )
+parser.add_argument(
+    "-d", "--show-duplicates", action="store_true"
+)
+parser.add_argument(
+    "-D", "--delete", action="store_true"
+)
 args = parser.parse_args()
 
 
@@ -87,6 +93,23 @@ def calculate_md5(file_path):
         for chunk in iter(lambda: file.read(4096), b''):
             md5_hash.update(chunk)
     return md5_hash.hexdigest()
+
+
+def get_key(md5, data):
+    '''
+    md5s can be duplicated in libretime so not sure how best to handle
+    this situation. problem with unique on md5 and label keys is that
+    if a file is moved from one folder to another how will we be able
+    to just update the same file in the db with that md5? If we write
+    the metadata to the file, then the md5 will change based only on
+    the file structure metadata (except for some reason that md5 is always
+    different when we save it with the same exact metadata).
+    '''
+    return md5
+    return '-'.join(
+        [md5] +
+        [str(data[i]) for i in LABEL_KEYS if data[i]]
+    )
 
 
 def scan_folder(ROOT_FOLDER, db={}):
@@ -99,218 +122,28 @@ def scan_folder(ROOT_FOLDER, db={}):
         for name in files:
             NUM_FILES = NUM_FILES + 1
 
-            if any([
-                name[0] in "~!#.?",
-                '.rslsa' == name[-6:],
-                name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg'
-            ]):
-                logging.debug('Skipping {0}'.format(name))
-                continue
-            print(
-                f"\r\033[K{next(spinner)} Scanning {ROOT_FOLDER}: {NUM_FILES}",
-                flush=True, end=''
-            )
-            parts = root.split('/')
+            path = os.path.join(root, name)
 
-            RELATIVE = root.split(ROOT_FOLDER)[1]
+            data = process_path(path, ROOT_FOLDER)
 
-            parts = RELATIVE.split('/')
-            if parts[0] == '':
-                parts.pop(0)
+            if data:
+                key = get_key(data['md5'], data)
+                db[key] = data
+                update_metadata(path, ROOT_FOLDER)
+                # new_md5 = calculate_md5(os.path.join(root, name))
+                # key = get_key(new_md5, data)
+                # db[key] = data
 
-            SKIP_DIR = False
-            for part in parts:
-                if part:
-                    if part[0] == '.':
-                        logging.debug(
-                            "Skipping folder {0}:{1}".format(part, name))
-                        SKIP_DIR = True
-            if SKIP_DIR:
-                continue
-
-            try:
-                label = normalize('NFC', parts[0])
-            except IndexError:
-                logging.warning(
-                    'File not properly organized: {0}'.format(name))
-                continue
-
-            try:
-                language = normalize('NFC', parts[1])
-            except IndexError:
-                language = None
-                logging.warning('File not in language folder: {0}'.format(
-                    os.path.join(RELATIVE, name)))
-                continue
-
-            try:
-                genre = normalize('NFC', parts[2])
-            except IndexError:
-                genre = None
-                logging.debug('File not in genre folder: {0}'.format(
-                    os.path.join(RELATIVE, name)))
-
-            if '#' in root:
-                try:
-                    m = re.findall(r'\/(#[^\/]*)', root)
-                    exclude = m[-1]
-                    label = label + ' :: ' + exclude
-                except Exception as e:
-                    logging.error(e)
-                    raise e
-
-            if label.lower() in TRACKS.keys():
-                track_id = TRACKS[label.lower()]['id']
-            else:
-                track_id = None
-
-            orig_md5 = calculate_md5(os.path.join(root, name))
-            db[orig_md5] = {
-                'path': os.path.join(root, name),
-                'new_md5': None,
-                'label': label,
-                'language': language,
-                'genre': genre,
-                'name': name.split('.')[0],
-                'library': track_id
-            }
-
-            try:
-                audio = mutagen.File(os.path.join(root, name), easy=True)
-            except Exception:
-                logging.warning(
-                    'Could not load file with mutagen: {0}'.format(name))
-                continue
-
-            if not audio:
-                file_path = os.path.join(root, name)
-                if os.path.exists(file_path):
-
-                    extension = name.split('.')[-1]
-                    if extension.lower() in 'wave':
-                        logging.warning('Cannot update .wav metadata')
-                        continue
-                    logging.warning("Audio is none")
-                    outfile = '/tmp/tmp.' + extension
-                    cmd = [
-                        'ffmpeg', '-y', '-v', 'quiet',
-                        '-i', file_path,
-                        '-c:a', 'copy', outfile
-                    ]
-                    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
-                    out, err = p.communicate()
-                    Popen(['mv', outfile, file_path])
-
-                    try:
-                        audio = mutagen.File(file_path, easy=True)
-                    except Exception:
-                        logging.warning(
-                            'Could not load file with mutagen after conversion: {0}'
-                            .format(name)
-                        )
-                        continue
-
-                    if not audio:
-                        logging.warning(
-                            'Attempting to add tags so we can use "easy": {0}'
-                            .format(name)
-                        )
-
-                        if extension.lower() in 'mp3':
-                            audio = ID3(file_path, translate=False)
-                            audio.add(TIT2(encoding=3, text=name))
-                            audio.save()
-                            audio = mutagen.File(file_path, easy=True)
-
-                else:
-                    print("NO exists!")
-
-            try:
-                logging.debug("UPDATE:  {0}".format(
-                    ' '.join(audio['title'].encode('utf-8'))))
-            except Exception:
-                logging.debug("UPDATE:  {0}".format(name.encode('utf-8')))
-            logging.debug('TAGS:    {0}'.format(audio))
-
-            SAVE = False
-            if audio:
-
-                # TAG: LANGUAGE
-                try:
-                    lang = audio['language']
-                except KeyError:
-                    lang = []
-                if language:
-                    if [language] != lang:
-                        lang = [language]
-                        try:
-                            audio.tags['language'] = lang
-                        except Exception:
-                            try:
-                                audio.tags['language'] = language
-                            except Exception:
-                                logging.warning(
-                                    "Could now write 'language' to {0}".format(
-                                        name)
-                                )
-                                continue
-                        SAVE = True
-                    logging.debug("LANG:    {0}".format(lang))
-
-                # TAG: LABEL (AKA ORGANIZATION)
-                try:
-                    t = audio['label']
-                except KeyError:
-                    try:
-                        t = audio['organization']
-                    except KeyError:
-                        t = []
-                # Overwrite label field
-                if [label] != t:
-                    t = [label]
-                    SAVE = True
-                logging.debug("LABEL:   {0}".format(t))
-
-                if SAVE:
-                    try:
-                        audio.tags['label'] = t
-                    except KeyError:
-                        pass
-                    audio.tags['organization'] = t
-
-                # TAG: GENRE
-                try:
-                    g = audio['genre']
-                except KeyError:
-                    g = []
-
-                if genre:
-                    if [genre] != g:
-                        SAVE = True
-                        g = [genre]
-                        logging.debug("GENRE:   {0}".format(t))
-
-                        audio.tags['genre'] = g
-
-                # Let's not do this. Let's just post this data to the database
-                # rather than editing the metadata of the file!
-                # if SAVE:
-                #     logging.info(
-                #         (
-                #             u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
-                #             .format(name, audio, lang, g, t)
-                #         )
-                #     )
-                #     audio.save()
-                #     new_md5 = calculate_md5(os.path.join(root, name))
-                #     db[orig_md5]['new_md5'] = new_md5
-                logging.debug(audio)
+                print(
+                    f"\r\033[K{next(spinner)} Scanning {ROOT_FOLDER}: {NUM_FILES}",
+                    flush=True, end=''
+                )
 
     logging.info("Scanned {0} files in {1}".format(NUM_FILES, ROOT_FOLDER))
     return db
 
 
-def load_radio_db():
+def load_radio_db(keep_duplicates=False):
     print("Loading Libretime DB")
     API_URL = f"{LIBRETIME_URL}/api/v2/files"
     response = requests.get(
@@ -319,7 +152,12 @@ def load_radio_db():
     files = response.json()
     data = {}
     session_id = login_playwright()
+
+    if keep_duplicates:
+        return {file['id']: file for file in files}
+
     for file in files:
+        key = get_key(file['md5'], file)
         if file['md5'] in data.keys():
             logging.warning(f"Duplicated: {file['name']}")
             if any(
@@ -329,7 +167,7 @@ def load_radio_db():
                 ] +
                 [any([
                     file[key] == ''
-                    for key in LABEL_KEYS if file[key]
+                    for key in LABEL_KEYS[:3] if file[key]
                 ])]
             ):
                 print(
@@ -339,8 +177,8 @@ def load_radio_db():
                     [file[key] for key in LABEL_KEYS],
                 )
                 delete_file(file['id'], session_id)
-                del file['md5']
-            if all([
+
+            elif all([
                 file[key] == data[file['md5']][key] for key in LABEL_KEYS
             ]):
                 print(
@@ -350,10 +188,11 @@ def load_radio_db():
                     [file[key] for key in LABEL_KEYS],
                 )
                 delete_file(file['id'], session_id)
-                del file['md5']
-
+            else:
+                # Need to give a new md5 name for the dict key?
+                data[key] = file
         else:
-            data[file['md5']] = file
+            data[key] = file
 
     return data
 
@@ -463,6 +302,7 @@ def sync_entire_folder():
     print(f"Loaded {len(libretime_db)} files from libretime")
 
     # Check files in libretime and delete
+    deleted = []
     for md5 in libretime_db.keys():
         if any([
             libretime_db[md5][key].find('#') > -1
@@ -476,6 +316,9 @@ def sync_entire_folder():
 
             )
             delete_file(libretime_db[md5]['id'], session_id)
+            deleted.append(md5)
+    for i in deleted:
+        del libretime_db[i]
 
     for folder in ROOT_FOLDERS:
         logging.info('Scanning {0}'.format(folder))
@@ -486,7 +329,7 @@ def sync_entire_folder():
     for md5 in exists:
         payload = {
             **{key: db[md5][key] for key in LABEL_KEYS},
-            **{key: libretime_db[md5][key] for key in REQUIRED}
+            **{key: libretime_db[md5][key] for key in REQUIRED},
         }
 
         # Outdated metadata, update
@@ -534,14 +377,54 @@ def sync_entire_folder():
         ]):
             continue
         else:
-            logging.info("Upload new file", db[md5]['name'])
+            logging.info(f"Upload new file: {db[md5]['name']}")
+            print(f"Upload new file: {db[md5]['name']}")
             status = upload_file(db[md5]['path'])
             if status == 201:
                 # Now update the file
-                should_resync = True
+                should_resync = False
+
+    # Delete files in libretime that aren't in our radio folder!
+    if args.delete:
+        deleted = (set(libretime_db.keys()) - set(db.keys()))
+        print(f'{len(deleted)} files to delete?')
+        for md5 in deleted:
+            if args.delete:
+                print(
+                    "Delete file not in our folder",
+                    [libretime_db[md5][i] for i in LABEL_KEYS]
+                )
 
     if should_resync:
         return sync_entire_folder()
+
+
+def show_all_duplicates():
+    db = load_radio_db(keep_duplicates=True)
+    data = {}
+    _keys = {}
+    for _, file in db.items():
+
+        if file['md5'] in _keys.keys():
+            # Duplicate
+            if file['md5'] not in db.keys():
+                data[file['md5']] = [
+                    db[_keys[file['md5']]],
+                    file
+                ]
+            else:
+                data[file['md5']].append(file)
+        else:
+            _keys[file['md5']] = file['id']
+
+    for key in data.keys():
+        print(f"Duplicated: {key}")
+        # print(db[key])
+        # print(file)
+        for file in data[key]:
+            print(file)
+            # print('\t'.join(file[i] for i in file))
+    return data
 
 
 def login_playwright():
@@ -571,25 +454,19 @@ def process_path(path, root_folder):
     Takes a folder path with our radio database and generates the
     GENRE, LABEL, and LANGUAGE based on the folder structure.
     Returns that metadata.
-
     '''
     name = os.path.basename(path)
-    print(name)
-    print(path)
     if any([
         name[0] in "~!#.?",
         '.rslsa' == name[-6:],
         name.split('.')[-1].lower() not in 'mp3 mp4 m4a flac wav ogg'
     ]):
-        print("returnign???")
         return
 
     RELATIVE = path.split(root_folder)[1]
-    print(RELATIVE)
     parts = RELATIVE.split('/')
     if parts[0] == '':
         parts.pop(0)
-    print(parts)
 
     SKIP_DIR = False
     for part in parts:
@@ -599,7 +476,7 @@ def process_path(path, root_folder):
                     "Skipping folder {0}:{1}".format(part, name))
                 SKIP_DIR = True
     if SKIP_DIR:
-        print("skipping dir")
+
         return
 
     try:
@@ -607,7 +484,6 @@ def process_path(path, root_folder):
     except IndexError:
         logging.warning(
             'File not properly organized: {0}'.format(name))
-        print('file not normlaise')
         return
 
     try:
@@ -616,8 +492,6 @@ def process_path(path, root_folder):
         language = None
         logging.warning('File not in language folder: {0}'.format(
             os.path.join(RELATIVE, name)))
-        print('no lanugage')
-        return
 
     try:
         genre = normalize('NFC', parts[2])
@@ -625,7 +499,6 @@ def process_path(path, root_folder):
         genre = None
         logging.debug('File not in genre folder: {0}'.format(
             os.path.join(RELATIVE, name)))
-        print('no genrey')
 
     if '#' in path:
         try:
@@ -656,7 +529,154 @@ def process_path(path, root_folder):
         'fullname': name,
         'library': track_id
     }
-    print(data)
+
+    return data
+
+
+def update_metadata(path, root):
+    data = process_path(path, root)
+    name = data['fullname']
+    language = data['language']
+    label = data['label']
+    genre = data['genre']
+    data['track_title'] = data['name']
+
+    try:
+        audio = mutagen.File(os.path.join(root, name), easy=True)
+    except Exception:
+        logging.warning(
+            'Could not load file with mutagen: {0}'.format(name))
+        audio = None
+
+    if not audio:
+        file_path = os.path.join(root, name)
+        if os.path.exists(file_path):
+            extension = name.split('.')[-1]
+            if extension.lower() in 'wave':
+                logging.warning('Cannot update .wav metadata')
+                return data
+            logging.warning("Audio is none")
+            outfile = '/tmp/tmp.' + extension
+            cmd = [
+                'ffmpeg', '-y', '-v', 'quiet',
+                '-i', file_path,
+                '-c:a', 'copy', outfile
+            ]
+            p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            out, err = p.communicate()
+            Popen(['mv', outfile, file_path])
+
+            try:
+                audio = mutagen.File(file_path, easy=True)
+            except Exception:
+                logging.warning(
+                    'Could not load file with mutagen after conversion: {0}'
+                    .format(name)
+                )
+                return data
+
+            if not audio:
+                logging.warning(
+                    'Attempting to add tags so we can use "easy": {0}'
+                    .format(name)
+                )
+
+                if extension.lower() in 'mp3':
+                    audio = ID3(file_path, translate=False)
+                    audio.add(TIT2(encoding=3, text=name))
+                    audio.save()
+                    audio = mutagen.File(file_path, easy=True)
+
+        else:
+            logging.warning(f"File doesn't exist, {file_path}")
+
+    try:
+        logging.debug("UPDATE:  {0}".format(
+            ' '.join(audio['title'].encode('utf-8'))
+        ))
+    except (KeyError, TypeError):
+        logging.debug("UPDATE:  {0}".format(name.encode('utf-8')))
+    logging.debug('TAGS:    {0}'.format(audio))
+
+    SAVE = False
+    if audio:
+
+        # TAG: TITLE - keep source file
+        try:
+            track_title = audio['title']
+            data['track_title'] = track_title
+        except KeyError:
+            pass
+
+        # TAG: LANGUAGE
+        try:
+            lang = audio['language']
+        except KeyError:
+            lang = []
+        if language:
+            if [language] != lang:
+                lang = [language]
+                try:
+                    audio.tags['language'] = lang
+                except Exception:
+                    try:
+                        audio.tags['language'] = language
+                    except Exception:
+                        logging.warning(
+                            "Could now write 'language' to {0}".format(
+                                name)
+                        )
+                        return data
+                SAVE = True
+            logging.debug("LANG:    {0}".format(lang))
+
+        # TAG: LABEL (AKA ORGANIZATION)
+        try:
+            t = audio['label']
+        except KeyError:
+            try:
+                t = audio['organization']
+            except KeyError:
+                t = []
+        # Overwrite label field
+        if [label] != t:
+            t = [label]
+            SAVE = True
+        logging.debug("LABEL:   {0}".format(t))
+
+        if SAVE:
+            try:
+                audio.tags['label'] = t
+            except KeyError:
+                pass
+            audio.tags['organization'] = t
+
+        # TAG: GENRE
+        try:
+            g = audio['genre']
+        except KeyError:
+            g = []
+
+        if genre:
+            if [genre] != g:
+                SAVE = True
+                g = [genre]
+                logging.debug("GENRE:   {0}".format(t))
+
+                audio.tags['genre'] = g
+
+        # Let's not do this. Let's just post this data to the database
+        # rather than editing the metadata of the file!
+        if SAVE:
+            logging.info(
+                (
+                    u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
+                    .format(name, audio, lang, g, t)
+                )
+            )
+            audio.save()
+        logging.debug(audio)
+        return data
     return data
 
 
@@ -741,7 +761,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 original['id'],
                 payload
             )
-        elif not deleted:
+        elif created:
             logging.info("Uploading new file")
             status = upload_file(new_data['path'])
             if status == 201:
@@ -765,58 +785,58 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         return path
 
     def on_moved(self, event):
-        """Called when a file or a directory is moved or renamed.
+        """
+        We should just update the metadata here!
+        """
+        print("file moved, update metadata")
 
-        :param event:
-            Event representing file/directory movement.
-        :type event:
-            :class:`DirMovedEvent` or :class:`FileMovedEvent`
+        # data = process_path(self._get_path(event), self.root_folder)
+        # if data:
+        # self.process_file(data, updated=True)
+        print(self._get_path(event))
+        try:
+            data = update_metadata(self._get_path(event), self.root_folder)
+        except Exception as e:
+            print(self._get_path(event), self.root_folder)
+            print(e)
+            raise Exception(e)
+        if data:
+            print(data)
+            self.process_file(data, updated=True)
+        else:
+            print("no data returned")
+
+    def on_created(self, event):
+        """
+
         """
         data = process_path(self._get_path(event), self.root_folder)
         if data:
-            self.process_file(data, updated=True)
-
-    def on_created(self, event):
-        """Called when a file or directory is created.
-
-            :param event:
-                Event representing file/directory creation.
-            :type event:
-                :class:`DirCreatedEvent` or :class:`FileCreatedEvent`
-            """
-        print("created")
-        data = process_path(self._get_path(event), self.root_folder)
-        if data:
-            self.process_file(data, updated=True)
+            self.process_file(data, created=True)
 
     def on_deleted(self, event):
-        """Called when a file or directory is deleted.
-
-            :param event:
-                Event representing file/directory deletion.
-            :type event:
-                :class:`DirDeletedEvent` or :class:`FileDeletedEvent`
-            """
-        print("deleted")
+        '''
+        Delete the file IF it's in the libretime database.
+        '''
         data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, deleted=True)
 
     def on_modified(self, event):
-        """Called when a file or directory is modified.
-
-            :param event:
-                Event representing file/directory modification.
-            :type event:
-                :class:`DirModifiedEvent` or :class:`FileModifiedEvent`
-            """
-        print("modified")
+        """
+        Since we update metadata on the file when it's moved, the modified
+        will be triggered so we can up date metadata in the database.
+        """
         data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, updated=True)
 
 
 def main():
+
+    if args.show_duplicates:
+        data = show_all_duplicates()
+        return data
 
     if args.verbose:
         logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -857,4 +877,4 @@ def main():
 if __name__ == "__main__":
     for track in TRACKS:
         TRACKS[track]['id'] = get_track_type_id(TRACKS[track]['name'])
-    main()
+    data = main()
