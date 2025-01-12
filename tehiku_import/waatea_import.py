@@ -34,6 +34,8 @@ with open(CONF_FILE, 'rb') as file:
     try:
         d = json.loads(file.read())
         BASE_MEDIA_DIR = d.get('wharekōrero_root_dir', BASE_MEDIA_DIR)
+        USER = d.get('user', 'www-data')
+        GROUP = d.get('group', 'www-data')
     except Exception:
         print('Could not read configuration file {0}.'.format(CONF_FILE))
         raise
@@ -42,10 +44,10 @@ with open(CONF_FILE, 'rb') as file:
 def prepare_folders(path=None):
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
-        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chown', USER, BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chgrp', GROUP, BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chmod', '777', BASE_MEDIA_DIR],
@@ -55,9 +57,9 @@ def prepare_folders(path=None):
     BASE_DIR = os.path.join(BASE_MEDIA_DIR, 'News', 'Māori', 'Waatea')
     if not os.path.exists(BASE_DIR):
         os.makedirs(BASE_DIR, exist_ok=True)
-        p = Popen(['chown', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chown', USER, BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chgrp', GROUP, BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chmod', '777', BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
@@ -65,11 +67,11 @@ def prepare_folders(path=None):
     if path:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-            p = Popen(['chown', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chown', USER, path], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chgrp', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chgrp', GROUP, path], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chmod', 'a+wr', path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chmod', '664', path], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
     return BASE_DIR
@@ -199,10 +201,10 @@ def get_waatea(time):
                 print(e)
                 return
 
-            p = Popen(['chown', 'www-data', tmp_file.name],
+            p = Popen(['chown', USER, tmp_file.name],
                       stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chgrp', 'www-data', tmp_file.name],
+            p = Popen(['chgrp', GROUP, tmp_file.name],
                       stdin=PIPE, stdout=PIPE)
             p.communicate()
             p = Popen(['mv', tmp_file.name, final_file],

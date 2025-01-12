@@ -427,6 +427,22 @@ def show_all_duplicates():
     return data
 
 
+def delete_duplicates(data):
+    print("\n")
+    session_id = login_playwright()
+    db = load_radio_db(keep_duplicates=True)
+    for file in db:
+        file = db[file]
+        if file['md5'] in data.keys():
+            # print(file['filepath'])
+            # print(file['md5'])
+            for duplicate in data[file['md5']]:
+                # print(duplicate)
+                if duplicate['id'] != file['id']:
+                    print(f"Delete {duplicate['filepath']}")
+                    delete_file(duplicate['id'], session_id)
+
+
 def login_playwright():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -836,6 +852,8 @@ def main():
 
     if args.show_duplicates:
         data = show_all_duplicates()
+        if args.delete:
+            delete_duplicates(data)
         return data
 
     if args.verbose:

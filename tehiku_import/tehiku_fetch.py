@@ -24,6 +24,8 @@ with open(CONF_FILE, 'rb') as file:
         d = json.loads(file.read())
         TOKEN = d['app_token']
         BASE_MEDIA_DIR = d.get('wharekōrero_root_dir', BASE_MEDIA_DIR)
+        USER = d.get('user', 'www-data')
+        GROUP = d.get('group', 'www-data')
     except KeyError:
         print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
         raise
@@ -105,9 +107,9 @@ def get_root_dir(label=''):
     ROOT_DIR = os.path.join(BASE_MEDIA_DIR, label)
     if not os.path.exists(ROOT_DIR):
         os.mkdir(ROOT_DIR)
-        p = Popen(['chown', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chown', USER, ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chgrp', GROUP, ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chmod', '777', ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
@@ -118,9 +120,9 @@ def get_pub_folder(root, genre, language):
     FOLDER = os.path.join(root, language, genre)
     if not os.path.exists(FOLDER):
         os.makedirs(FOLDER, exist_ok=True)
-        p = Popen(['chown', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chown', USER, FOLDER], stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chgrp', GROUP, FOLDER], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chmod', '777', FOLDER], stdin=PIPE, stdout=PIPE)
         p.communicate()
@@ -286,13 +288,13 @@ def get_item_from_collection(
                 if duration:
                     scale_media(tmp_file, duration)
 
-                p = Popen(['chown', 'www-data', tmp_file],
+                p = Popen(['chown', USER, tmp_file],
                           stdin=PIPE, stdout=PIPE)
                 p.communicate()
-                p = Popen(['chgrp', 'www-data', tmp_file],
+                p = Popen(['chgrp', GROUP, tmp_file],
                           stdin=PIPE, stdout=PIPE)
                 p.communicate()
-                p = Popen(['chmod', 'a+rw', tmp_file],
+                p = Popen(['chmod', '664', tmp_file],
                           stdin=PIPE, stdout=PIPE)
                 p.communicate()
 
@@ -391,10 +393,10 @@ def prepare_folders():
     # setup_folders
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
-        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chown', USER, BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chgrp', GROUP, BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chmod', '777', BASE_MEDIA_DIR],
