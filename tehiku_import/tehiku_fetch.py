@@ -1,22 +1,22 @@
-import mutagen
-import requests
-from datetime import datetime, timedelta
-import time
-import pytz
-import json
-from glob import glob
-import re
-from subprocess import Popen, PIPE
 import argparse
+import json
 import os
+import re
 import sys
-from urllib.parse import urlparse
+import time
+from datetime import datetime, timedelta
+from glob import glob
 from os.path import splitext
+from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlparse
 
+import mutagen
+import pytz
+import requests
+from tehiku_import.add_artwork import add_artwork
 from tehiku_import.import_functions import scale_media
 from tehiku_import.settings import BASE_MEDIA_DIR, CONF_FILE
-from tehiku_import.add_artwork import add_artwork
 
 # Load Configuration
 with open(CONF_FILE, 'rb') as file:
@@ -109,6 +109,8 @@ def get_root_dir(label=''):
         p.communicate()
         p = Popen(['chgrp', 'www-data', ROOT_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
+        p = Popen(['chmod', '777', ROOT_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
     return ROOT_DIR
 
 
@@ -119,6 +121,8 @@ def get_pub_folder(root, genre, language):
         p = Popen(['chown', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chgrp', 'www-data', FOLDER], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chmod', '777', FOLDER], stdin=PIPE, stdout=PIPE)
         p.communicate()
     return FOLDER
 
@@ -288,6 +292,9 @@ def get_item_from_collection(
                 p = Popen(['chgrp', 'www-data', tmp_file],
                           stdin=PIPE, stdout=PIPE)
                 p.communicate()
+                p = Popen(['chmod', 'a+rw', tmp_file],
+                          stdin=PIPE, stdout=PIPE)
+                p.communicate()
 
                 fd = mutagen.File(tmp_file, easy=True)
 
@@ -388,6 +395,9 @@ def prepare_folders():
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
         p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
+                  stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chmod', '777', BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
 

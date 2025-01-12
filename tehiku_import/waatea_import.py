@@ -48,7 +48,7 @@ def prepare_folders(path=None):
         p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chmod', '-R', 'a+wrx', BASE_MEDIA_DIR],
+        p = Popen(['chmod', '777', BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
 
@@ -59,7 +59,7 @@ def prepare_folders(path=None):
         p.communicate()
         p = Popen(['chgrp', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chmod', '-R', 'a+wrx', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chmod', '777', BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
 
     if path:
@@ -69,8 +69,7 @@ def prepare_folders(path=None):
             p.communicate()
             p = Popen(['chgrp', 'www-data', path], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chmod', '-R', 'a+wr', path],
-                      stdin=PIPE, stdout=PIPE)
+            p = Popen(['chmod', 'a+wr', path], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
     return BASE_DIR
