@@ -1,20 +1,19 @@
-import json
-import tempfile
-import mutagen
 import argparse
+import json
+import os
 import re
+import sys
+import tempfile
 from datetime import datetime, timedelta
-import pytz
-from subprocess import Popen, PIPE
 from ftplib import FTP
 from os import path
+from subprocess import PIPE, Popen
 
-import sys
-import os
-
-from tehiku_import.settings import BASE_MEDIA_DIR, CONF_FILE
-from tehiku_import.import_functions import scale_media
+import mutagen
+import pytz
 from tehiku_import.add_artwork import add_artwork
+from tehiku_import.import_functions import scale_media
+from tehiku_import.settings import BASE_MEDIA_DIR, CONF_FILE
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
@@ -49,6 +48,9 @@ def prepare_folders(path=None):
         p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
+        p = Popen(['chmod', '-R', 'a+wrx', BASE_MEDIA_DIR],
+                  stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
     BASE_DIR = os.path.join(BASE_MEDIA_DIR, 'News', 'Māori', 'Waatea')
     if not os.path.exists(BASE_DIR):
@@ -57,6 +59,8 @@ def prepare_folders(path=None):
         p.communicate()
         p = Popen(['chgrp', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
+        p = Popen(['chmod', '-R', 'a+wrx', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
 
     if path:
         if not os.path.exists(path):
@@ -64,6 +68,9 @@ def prepare_folders(path=None):
             p = Popen(['chown', 'www-data', path], stdin=PIPE, stdout=PIPE)
             p.communicate()
             p = Popen(['chgrp', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chmod', '-R', 'a+wr', path],
+                      stdin=PIPE, stdout=PIPE)
             p.communicate()
 
     return BASE_DIR
@@ -143,8 +150,8 @@ def get_waatea(time):
 
     f_path = prepare_folders()
 
-    tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
-    prepare_folders(tmp_path)
+    # tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
+    # prepare_folders(tmp_path)
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         # tmp_file = os.path.join(tmp_path, f_name)
@@ -187,7 +194,7 @@ def get_waatea(time):
             ftp.retrbinary('RETR %s.MP3' % (f_id), tmp_file.write)
 
             try:
-                media_length = scale_media(tmp_file.name, target_length)
+                _ = scale_media(tmp_file.name, target_length)
             except Exception as e:
                 print("Error scaling media.")
                 print(e)
@@ -215,15 +222,15 @@ def get_waatea(time):
             # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
             fd.save()
 
-            td = (datetime.now() - start_time)
-            print('elapsed time = %s' % (td.seconds))
-
             # Try to add album art.
             image_url = 'https://waateanews.com/wp-content/uploads/2021/04/logo-4.png'
             try:
                 add_artwork(image_url, final_file)
             except Exception:
                 pass
+
+            td = (datetime.now() - start_time)
+            print('success. elapsed time = %s' % (td.seconds))
 
         else:
             if os.path.exists(tmp_file.name):
