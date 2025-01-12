@@ -207,19 +207,7 @@ def get_waatea(time):
                 print(e)
                 return
 
-            p = Popen(['mv', tmp_file.name, final_file],
-                      stdin=PIPE, stdout=PIPE)
-            p.communicate()
-            p = Popen(['chown', USER, final_file],
-                      stdin=PIPE, stdout=PIPE)
-            p.communicate()
-            p = Popen(['chgrp', GROUP, final_file],
-                      stdin=PIPE, stdout=PIPE)
-            p.communicate()
-            p = Popen(['chmod', '664', final_file], stdin=PIPE, stdout=PIPE)
-            p.communicate()
-
-            fd = mutagen.File(final_file, easy=True)
+            fd = mutagen.File(tmp_file.name, easy=True)
             fd.tags['DATE'] = record_date.strftime('%Y')
             fd.tags['TITLE'] = "%02d%sM " % (hour, ampm.upper(
             )) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
@@ -234,9 +222,21 @@ def get_waatea(time):
             # Try to add album art.
             image_url = 'https://waateanews.com/wp-content/uploads/2021/04/logo-4.png'
             try:
-                add_artwork(image_url, final_file)
+                add_artwork(image_url, tmp_file.name)
             except Exception:
                 pass
+
+            p = Popen(['mv', tmp_file.name, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chown', USER, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chgrp', GROUP, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chmod', '664', final_file], stdin=PIPE, stdout=PIPE)
+            p.communicate()
 
             td = (datetime.now() - start_time)
             print('success. elapsed time = %s' % (td.seconds))
