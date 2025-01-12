@@ -207,14 +207,16 @@ def get_waatea(time):
                 print(e)
                 return
 
-            p = Popen(['chown', USER, tmp_file.name],
-                      stdin=PIPE, stdout=PIPE)
-            p.communicate()
-            p = Popen(['chgrp', GROUP, tmp_file.name],
-                      stdin=PIPE, stdout=PIPE)
-            p.communicate()
             p = Popen(['mv', tmp_file.name, final_file],
                       stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chown', USER, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chgrp', GROUP, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chmod', '664', final_file], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
             fd = mutagen.File(final_file, easy=True)
