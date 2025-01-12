@@ -1,26 +1,26 @@
 import argparse
 import datetime
+import hashlib
 import itertools
+import json
+import logging
 import mimetypes
 import os
 import re
 import sys
+from logging.handlers import TimedRotatingFileHandler
+from subprocess import PIPE, Popen
 from time import sleep
+from unicodedata import normalize
+
 import mutagen
-import logging
-import json
-import hashlib
 import pytz
 import requests
-from requests.auth import HTTPBasicAuth
 from mutagen.id3 import ID3, TIT2
-from unicodedata import normalize
-from subprocess import Popen, PIPE
-from watchdog.observers import Observer
+from playwright.sync_api import expect, sync_playwright
+from requests.auth import HTTPBasicAuth
 from watchdog.events import RegexMatchingEventHandler
-from playwright.sync_api import sync_playwright, expect
-from logging.handlers import TimedRotatingFileHandler
-
+from watchdog.observers import Observer
 
 CONF_FILE = "/etc/librescripts/conf.json"
 LABEL_KEYS = ['genre', 'language', 'label', 'library']
@@ -372,6 +372,10 @@ def sync_entire_folder():
     should_resync = False
     new = (set(db.keys()) - set(libretime_db.keys()))
     for md5 in new:
+        payload = {
+            **{key: db[md5][key] for key in LABEL_KEYS},
+            **{key: libretime_db[md5][key] for key in REQUIRED},
+        }
         if any([
             db[md5][key].find('#') > -1 for key in LABEL_KEYS[:3] if db[md5][key]
         ]):
@@ -382,7 +386,7 @@ def sync_entire_folder():
             status = upload_file(db[md5]['path'])
             if status == 201:
                 # Now update the file
-                should_resync = False
+                should_resync = True
 
     # Delete files in libretime that aren't in our radio folder!
     if args.delete:
@@ -745,8 +749,10 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         status = 200
         md5 = new_data['md5']
         if md5 in self.db.keys():
+            md5_changed = False
             original = self.db[md5]
         else:
+            md5_changed = True
             original = self._match_file(new_data)
 
         if deleted and original:
@@ -777,6 +783,11 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 original['id'],
                 payload
             )
+            if md5_changed:
+                # We need to reupload the new file to the database!
+                print("we need to replace the old file!")
+                return
+
         elif created:
             logging.info("Uploading new file")
             status = upload_file(new_data['path'])

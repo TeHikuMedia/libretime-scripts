@@ -5,6 +5,7 @@ import re
 import sys
 import tempfile
 from datetime import datetime, timedelta
+from distutils import extension
 from ftplib import FTP
 from os import path
 from subprocess import PIPE, Popen
@@ -195,7 +196,12 @@ def get_waatea(time):
             ftp.retrbinary('RETR %s.MP3' % (f_id), tmp_file.write)
 
             try:
-                _ = scale_media(tmp_file.name, target_length)
+                _ = scale_media(
+                    tmp_file.name, target_length,
+                    max_scale=10,
+                    max_seconds_delta=0.1,
+                    extension='mp3'
+                )
             except Exception as e:
                 print("Error scaling media.")
                 print(e)

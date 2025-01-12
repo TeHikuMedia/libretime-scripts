@@ -286,7 +286,7 @@ def get_item_from_collection(
                     tmp_file = convert_audio(tmp_file)
 
                 if duration:
-                    scale_media(tmp_file, duration)
+                    scale_media(tmp_file, duration, extension=file_extension)
 
                 p = Popen(['chown', USER, tmp_file],
                           stdin=PIPE, stdout=PIPE)
