@@ -190,7 +190,9 @@ def load_radio_db(keep_duplicates=False):
                 delete_file(file['id'], session_id)
             else:
                 # Need to give a new md5 name for the dict key?
-                data[key] = file
+                print(file['uploaded'])
+                if file['uploaded'] > data[key]['uploaded']:
+                    data[key] = file
         else:
             data[key] = file
 
@@ -295,7 +297,7 @@ def upload_file(file_path):
         return response.status_code
 
 
-def sync_entire_folder():
+def sync_entire_folder(delete=args.delete):
     db = {}
     session_id = login_playwright()
     libretime_db = load_radio_db()
@@ -374,7 +376,6 @@ def sync_entire_folder():
     for md5 in new:
         payload = {
             **{key: db[md5][key] for key in LABEL_KEYS},
-            **{key: libretime_db[md5][key] for key in REQUIRED},
         }
         if any([
             db[md5][key].find('#') > -1 for key in LABEL_KEYS[:3] if db[md5][key]
@@ -389,18 +390,39 @@ def sync_entire_folder():
                 should_resync = True
 
     # Delete files in libretime that aren't in our radio folder!
-    if args.delete:
-        deleted = (set(libretime_db.keys()) - set(db.keys()))
+    if delete:
+        labels = {}
+        for _, value in db.items():
+            if value['label'] not in labels.keys():
+                labels[value['label']] = True
+
+        print("Only delete these labels: ")
+        for label in labels:
+            print(label)
+
+        to_delete = {}
+        for key, value in libretime_db.items():
+            if value['label'] in labels:
+                to_delete[key] = value
+
+        deleted = (set(to_delete.keys()) - set(db.keys()))
+        print(deleted)
         print(f'{len(deleted)} files to delete?')
         for md5 in deleted:
-            if args.delete:
-                print(
-                    "Delete file not in our folder",
-                    [libretime_db[md5][i] for i in LABEL_KEYS]
-                )
+
+            print(
+                "Delete file ",
+                md5,
+                [to_delete[md5][i] for i in ['track_title']+LABEL_KEYS]
+            )
+            try:
+                delete_file(to_delete[md5]['id'], session_id)
+            except Exception as e:
+                print("Could not delete file")
+                print(e)
 
     if should_resync:
-        return sync_entire_folder()
+        return sync_entire_folder(delete=False)
 
 
 def show_all_duplicates():

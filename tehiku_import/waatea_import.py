@@ -9,6 +9,7 @@ from distutils import extension
 from ftplib import FTP
 from os import path
 from subprocess import PIPE, Popen
+from time import sleep
 
 import mutagen
 import pytz
@@ -209,8 +210,10 @@ def get_waatea(time):
 
             fd = mutagen.File(tmp_file.name, easy=True)
             fd.tags['DATE'] = record_date.strftime('%Y')
-            fd.tags['TITLE'] = "%02d%sM " % (hour, ampm.upper(
-            )) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
+            fd.tags['TITLE'] = (
+                time.strftime('%H:00 ') +
+                'Waatea News - {0}'.format(record_date.strftime('%a').upper())
+            )
             fd.tags['ARTIST'] = "Waatea"
             fd.tags['Album'] = "Waatea"
             fd.tags['Language'] = "Māori"
@@ -225,7 +228,7 @@ def get_waatea(time):
                 add_artwork(image_url, tmp_file.name)
             except Exception:
                 pass
-
+            sleep(0.5)
             p = Popen(['mv', tmp_file.name, final_file],
                       stdin=PIPE, stdout=PIPE)
             p.communicate()
