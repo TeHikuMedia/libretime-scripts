@@ -119,7 +119,7 @@ def get_key(md5, data):
 def scan_folder(ROOT_FOLDER, db={}, update_metadata=False):
     NUM_FILES = 0
     spinner = itertools.cycle(['-', '/', '|', '\\'])
-    exclude = set(['.sync', '#recycle'])
+    exclude = set(['.sync', '#recycle', '#ToOrganiseFromAirtime', '#Trash'])
     for root, dirs, files in os.walk(ROOT_FOLDER):
         # dirpath, dirnames, filesnames
         skip = False
