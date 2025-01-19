@@ -121,7 +121,13 @@ def scan_folder(ROOT_FOLDER, db={}, update_metadata=False):
     spinner = itertools.cycle(['-', '/', '|', '\\'])
     exclude = set(['.sync', '#recycle'])
     for root, dirs, files in os.walk(ROOT_FOLDER):
-        dirs[:] = [d for d in dirs if d not in exclude]
+        # dirpath, dirnames, filesnames
+        skip = False
+        for ex in exclude:
+            if ex in root:
+                skip = True
+        if skip:
+            continue
 
         for name in files:
             NUM_FILES = NUM_FILES + 1
