@@ -32,6 +32,7 @@ TRACKS = {
     'news': {"id": None, "name": 'NEWS'},
     'pānui': {"id": None, "name": 'PANUI'},
     'ads': {"id": None, "name": 'AD'},
+    'interview': {"id": None, "name": 'INTERVIEW'},
 }
 
 try:
@@ -929,3 +930,103 @@ if __name__ == "__main__":
     for track in TRACKS:
         TRACKS[track]['id'] = get_track_type_id(TRACKS[track]['name'])
     data = main()
+
+
+# API CALLS
+'''
+
+adding a webstream to a schedule
+
+await fetch("https://tehiku.radio/showbuilder/schedule-add", {
+    "credentials": "include",
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Priority": "u=0"
+    },
+    "referrer": "https://tehiku.radio/showbuilder",
+    "body": "format=json&mediaIds%5B0%5D%5Bid%5D=7&mediaIds%5B0%5D%5Btype%5D=stream&schedIds%5B0%5D%5Bid%5D=68674&schedIds%5B0%5D%5Binstance%5D=852&schedIds%5B0%5D%5Btimestamp%5D=1736727610",
+    "method": "POST",
+    "mode": "cors"
+});
+
+
+await fetch("https://tehiku.radio/showbuilder/schedule-add", {
+    "credentials": "include",
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Priority": "u=0"
+    },
+    "referrer": "https://tehiku.radio/showbuilder",
+    "body": "format=json&mediaIds%5B0%5D%5Bid%5D=16383&mediaIds%5B0%5D%5Btype%5D=audioclip&schedIds%5B0%5D%5Bid%5D=68674&schedIds%5B0%5D%5Binstance%5D=852&schedIds%5B0%5D%5Btimestamp%5D=1736728069",
+    "method": "POST",
+    "mode": "cors"
+
+});
+
+
+# body post data
+format=json
+mediaIds[0][id]=16383
+mediaIds[0][type]=audioclip
+schedIds[0][id]=68674 // probably instance after which item should be added!
+schedIds[0][instance]=852
+schedIds[0][timestamp]=1736728069
+
+
+await fetch("https://tehiku.radio/showbuilder/builder-feed", {
+    "credentials": "include",
+    "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin"
+    },
+    "referrer": "https://tehiku.radio/showbuilder",
+    "body": "sEcho=6&iColumns=13&sColumns=&iDisplayStart=0&iDisplayLength=10&mDataProp_0=allowed&mDataProp_1=image&mDataProp_2=starts&mDataProp_3=ends&mDataProp_4=runtime&mDataProp_5=title&mDataProp_6=creator&mDataProp_7=album&mDataProp_8=cuein&mDataProp_9=cueout&mDataProp_10=fadein&mDataProp_11=fadeout&mDataProp_12=mime&timestamp=1736728346&instances=1135%2C852%2C1155%2C1175%2C872%2C1195%2C1215%2C892%2C1235&format=json&start=2025-01-13+13%3A29&end=2025-01-13+16%3A29",
+    "method": "POST",
+    "mode": "cors"
+});
+
+sEcho=6
+iColumns=13
+sColumns
+iDisplayStart=0
+iDisplayLength=10
+mDataProp_0=allowed
+mDataProp_1=image
+mDataProp_2=starts
+mDataProp_3=ends
+mDataProp_4=runtime
+mDataProp_5=title
+mDataProp_6=creator
+mDataProp_7=album
+mDataProp_8=cuein
+mDataProp_9=cueout
+mDataProp_10=fadein
+mDataProp_11=fadeout
+mDataProp_12=mime
+timestamp=1736728346
+instances=1135,852,1155,1175,872,1195,1215,892,1235
+format=json
+start=2025-01-13 13:29
+end=2025-01-13 16:29
+
+'''
