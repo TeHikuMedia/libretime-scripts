@@ -550,7 +550,7 @@ def process_path(path, root_folder):
             label = label + ' :: ' + exclude
         except Exception as e:
             logging.error(e)
-            raise e
+            label = label + ":: #"
 
     try:
         orig_md5 = calculate_md5(path)

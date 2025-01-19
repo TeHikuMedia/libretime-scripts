@@ -26,6 +26,7 @@ with open(CONF_FILE, 'rb') as file:
         BASE_MEDIA_DIR = d.get('wharekōrero_root_dir', BASE_MEDIA_DIR)
         USER = d.get('user', 'www-data')
         GROUP = d.get('group', 'www-data')
+        print(d)
     except KeyError:
         print('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
         raise
