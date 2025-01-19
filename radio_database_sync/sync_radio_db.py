@@ -85,6 +85,9 @@ parser.add_argument(
 parser.add_argument(
     "-D", "--delete", action="store_true"
 )
+parser.add_argument(
+    "-m", "--metadata", action="store_true"
+)
 args = parser.parse_args()
 
 
@@ -113,7 +116,7 @@ def get_key(md5, data):
     )
 
 
-def scan_folder(ROOT_FOLDER, db={}):
+def scan_folder(ROOT_FOLDER, db={}, update_metadata=False):
     NUM_FILES = 0
     spinner = itertools.cycle(['-', '/', '|', '\\'])
     exclude = set(['.sync', '#recycle'])
@@ -130,7 +133,8 @@ def scan_folder(ROOT_FOLDER, db={}):
             if data:
                 key = get_key(data['md5'], data)
                 db[key] = data
-                update_metadata(path, ROOT_FOLDER)
+                if update_metadata:
+                    _update_metadata(path, ROOT_FOLDER)
                 # new_md5 = calculate_md5(os.path.join(root, name))
                 # key = get_key(new_md5, data)
                 # db[key] = data
@@ -298,7 +302,7 @@ def upload_file(file_path):
         return response.status_code
 
 
-def sync_entire_folder(delete=args.delete):
+def sync_entire_folder(delete=args.delete, update_metadata=False):
     db = {}
     session_id = login_playwright()
     libretime_db = load_radio_db()
@@ -325,7 +329,7 @@ def sync_entire_folder(delete=args.delete):
 
     for folder in ROOT_FOLDERS:
         logging.info('Scanning {0}'.format(folder))
-        db = {**db, **scan_folder(folder)}
+        db = {**db, **scan_folder(folder, update_metadata=update_metadata)}
     print(f"\nLoaded {len(db)} files from {folder}\n")
 
     exists = (db.keys() & libretime_db.keys())
@@ -576,7 +580,7 @@ def process_path(path, root_folder):
     return data
 
 
-def update_metadata(path, root):
+def _update_metadata(path, root):
     data = process_path(path, root)
     name = data['fullname']
     language = data['language']
@@ -845,7 +849,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         # self.process_file(data, updated=True)
         print(self._get_path(event))
         try:
-            data = update_metadata(self._get_path(event), self.root_folder)
+            data = _update_metadata(self._get_path(event), self.root_folder)
         except Exception as e:
             print(self._get_path(event), self.root_folder)
             print(e)
@@ -896,7 +900,11 @@ def main():
 
     if args.sync:
         print("Sync entire folder.")
-        sync_entire_folder()
+        if (args.metadata is True):
+            print("Updating metadata")
+        else:
+            print("Not updating metadata")
+        sync_entire_folder(update_metadata=args.metadata)
 
     if not args.watch:
         return
