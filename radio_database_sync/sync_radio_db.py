@@ -61,11 +61,12 @@ handler = TimedRotatingFileHandler(
     filename=LOGFILE, when='D', interval=30, backupCount=3, encoding='utf-8',
     delay=False
 )
+stream_handler = logging.StreamHandler()
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
     level=logging.INFO,
     # filename=LOGFILE,
-    handlers=(handler,)
+    handlers=(handler, stream_handler)
 )
 
 parser = argparse.ArgumentParser()
@@ -240,6 +241,7 @@ def update_file(file_id, kwargs):
     try:
         response.raise_for_status()
     except Exception:
+        print(f"Could not update file: {response.status_code}")
         logging.error(response.text)
     finally:
         return response.status_code
@@ -485,7 +487,8 @@ def login_playwright():
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
-        page.goto(f'{LIBRETIME_URL}/login')
+        URL = f"{LIBRETIME_URL}/login"
+        page.goto(URL)
         # Perform login
         page.fill('input[name="username"]', LIBRETIME_USER)
         page.fill('input[name="password"]', LIBRETIME_PASSWORD)
@@ -772,7 +775,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 data['label'] == item['label'],
                 data['language'] == item['language'],
             ]):
-                print('matched')
+                logging.info('Matched files in db and filesystem')
                 return item
         return None
 
@@ -789,13 +792,38 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
             original = self._match_file(new_data)
 
         if deleted and original:
+            logging.info("Deleting file.")
             status = delete_file(
                 original['id'],
                 self.session_id
             )
+            if status > 399:
+                logging.error("Could not delete file," + original['name'])
         elif deleted:
             logging.info("File deleted that wasn't found in db.")
         elif original and updated and not deleted:
+            logging.info("Updating file.")
+            if md5_changed:
+                # We need to reupload the new file to the database!
+                logging.warning("we need to replace the old file!")
+                status = delete_file(
+                    original['id'],
+                    self.session_id
+                )
+                if status < 300:
+                    logging.warning("Deleted filed.")
+                else:
+                    logging.error("Could no delete file!")
+
+                status = upload_file(
+                    original['path']
+                )
+                if status == 201:
+                    # Now update the file
+                    sleep(5)
+                    self.refresh_db()
+                    return self.process_file(new_data, updated=True)
+
             # Modify existing
             payload = {
                 **{key: new_data[key] for key in LABEL_KEYS},
@@ -811,15 +839,10 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
             ).isoformat()
             if not payload['mime']:
                 payload['mime'] = mimetypes.guess_type(new_data['path'])[0]
-            print('update file', new_data)
             status = update_file(
                 original['id'],
                 payload
             )
-            if md5_changed:
-                # We need to reupload the new file to the database!
-                print("we need to replace the old file!")
-                return
 
         elif created:
             logging.info("Uploading new file")
@@ -828,7 +851,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
                 # Now update the file
                 sleep(5)
                 self.refresh_db()
-                self.process_file(new_data, updated=True)
+                return self.process_file(new_data, updated=True)
 
         if status >= 401:
             self.session_id = login_playwright()
@@ -848,12 +871,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         """
         We should just update the metadata here!
         """
-        print("file moved, update metadata")
-
-        # data = process_path(self._get_path(event), self.root_folder)
-        # if data:
-        # self.process_file(data, updated=True)
-        print(self._get_path(event))
+        logging.info("moved: " + event.dest_path)
         try:
             data = _update_metadata(self._get_path(event), self.root_folder)
         except Exception as e:
@@ -878,6 +896,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         '''
         Delete the file IF it's in the libretime database.
         '''
+        logging.warning("deleted: " + event.dest_path)
         data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, deleted=True)
@@ -887,6 +906,7 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
         Since we update metadata on the file when it's moved, the modified
         will be triggered so we can up date metadata in the database.
         """
+        logging.info("modified: " + event.dest_path)
         data = process_path(self._get_path(event), self.root_folder)
         if data:
             self.process_file(data, updated=True)
