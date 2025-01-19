@@ -32,7 +32,7 @@ TRACKS = {
     'news': {"id": None, "name": 'NEWS'},
     'pānui': {"id": None, "name": 'PANUI'},
     'ads': {"id": None, "name": 'AD'},
-    'interview': {"id": None, "name": 'INTERVIEW'},
+    'interview': {"id": None, "name": 'IV'},
 }
 
 try:
