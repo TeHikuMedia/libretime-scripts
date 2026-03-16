@@ -4,7 +4,7 @@ import stat
 import os
 import pwd
 import grp
-from subprocess import call
+from subprocess import STDOUT, check_call
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 print(script_path)
@@ -22,6 +22,9 @@ data_files = [
     ('/etc/cron.d', [
         'install/cron/tehiku_import',
         'install/cron/update_metadata'
+    ]),
+    ('/etc/systemd/system', [
+        'install/systemd/sync-radio-db.service',
     ]),
 ]
 
@@ -41,11 +44,11 @@ if not os.path.exists(LOG_FILE):
     os.chmod(LOG_FILE, stat.S_IRUSR | stat.S_IWUSR |
              stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
-conf_dict = read_configuration("setup.cfg")
+conf_dict = read_configuration("/etc/librescripts/setup.cfg")
 
 setup(
     name="libretime_scripts",
-    version="0.2.2",
+    version="0.4.0",
     author="@kmahelona",
     description="A collection of scripts to help with automated ingesting of media to LibreTime",
     packages=find_packages(),
@@ -60,6 +63,8 @@ setup(
         'pyyaml',
         'requests',
         'pytz',
+        'watchdog',
+        'playwright'
     ],
     entry_points={
         "console_scripts": [
@@ -68,7 +73,8 @@ setup(
             "tehiku-fetch = tehiku_import.tehiku_fetch:main",
             "radio-db-actions = radio_database_sync.db_management:main",
             "schedule-stream-target = remote_streams.schedule_stream_target:main",
-            "ingest-youtube = remote_streams.ingest:main"
+            "ingest-youtube = remote_streams.ingest:main",
+            "radio-db-sync-libretime4 = radio_database_sync.sync_radio_db:main"
         ]
     },
     data_files=conf_dict['options']['data_files']
@@ -85,3 +91,11 @@ for file in conf_dict['options']['data_files']:
             # call(['chmod', '644', file_path])
             os.chmod(file_path, stat.S_IRUSR | stat.S_IWUSR |
                      stat.S_IRGRP | stat.S_IROTH)
+
+try:
+    check_call(
+        ['playwright', 'install-deps', 'chromium'],
+        stdout=open(os.devnull, 'wb'), stderr=STDOUT
+    )
+except Exception:
+    print("Could not install playwright")

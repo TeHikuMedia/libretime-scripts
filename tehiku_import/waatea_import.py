@@ -1,60 +1,79 @@
-# from __future__ import absolute_import
+import argparse
+import json
+import os
+import re
+import sys
+import tempfile
+from datetime import datetime, timedelta
+from distutils import extension
+from ftplib import FTP
+from os import path
+from subprocess import PIPE, Popen
+from time import sleep
 
 import mutagen
-import argparse
-import re
-from datetime import datetime, timedelta
 import pytz
-from subprocess import Popen, PIPE
-from math import floor
-from ftplib import FTP
-from os import fchown, path
-from pwd import getpwnam
-from grp import getgrnam
-from shutil import copyfile
-
-
-import sys
-import os
-
-from tehiku_import.settings import BASE_MEDIA_DIR
-from tehiku_import.import_functions import time_string, convert_media, scale_media
 from tehiku_import.add_artwork import add_artwork
+from tehiku_import.import_functions import scale_media
+from tehiku_import.settings import BASE_MEDIA_DIR, CONF_FILE
 
 timezone = pytz.timezone("Pacific/Auckland")
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-a", "--all", help="Download Waatea news items for each hour.", action="store_true")
+    "-a", "--all", help="Download Waatea news items for each hour.",
+    action="store_true"
+)
 parser.add_argument("-t", "--hour", help="Hour to download")
 parser.add_argument(
-    "-x", "--delete", help="Delete all the downloaded files befor continuing.", action="store_true")
+    "-x", "--delete", help="Delete all the downloaded files befor continuing.",
+    action="store_true"
+)
 args = parser.parse_args()
+
+
+# Load Configuration
+with open(CONF_FILE, 'rb') as file:
+    try:
+        d = json.loads(file.read())
+        BASE_MEDIA_DIR = d.get('wharekōrero_root_dir', BASE_MEDIA_DIR)
+        USER = d.get('user', 'www-data')
+        GROUP = d.get('group', 'www-data')
+    except Exception:
+        print('Could not read configuration file {0}.'.format(CONF_FILE))
+        raise
 
 
 def prepare_folders(path=None):
     if not os.path.exists(BASE_MEDIA_DIR):
         os.mkdir(BASE_MEDIA_DIR)
-        p = Popen(['chown', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chown', USER, BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_MEDIA_DIR],
+        p = Popen(['chgrp', GROUP, BASE_MEDIA_DIR],
+                  stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chmod', '777', BASE_MEDIA_DIR],
                   stdin=PIPE, stdout=PIPE)
         p.communicate()
 
-    BASE_DIR = os.path.join(BASE_MEDIA_DIR, 'waatea_news')
+    BASE_DIR = os.path.join(BASE_MEDIA_DIR, 'News', 'Māori', 'Waatea')
     if not os.path.exists(BASE_DIR):
-        os.mkdir(BASE_DIR)
-        p = Popen(['chown', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        os.makedirs(BASE_DIR, exist_ok=True)
+        p = Popen(['chown', USER, BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
-        p = Popen(['chgrp', 'www-data', BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p = Popen(['chgrp', GROUP, BASE_DIR], stdin=PIPE, stdout=PIPE)
+        p.communicate()
+        p = Popen(['chmod', '777', BASE_DIR], stdin=PIPE, stdout=PIPE)
         p.communicate()
 
     if path:
         if not os.path.exists(path):
-            os.mkdir(path)
-            p = Popen(['chown', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            os.makedirs(path, exist_ok=True)
+            p = Popen(['chown', USER, path], stdin=PIPE, stdout=PIPE)
             p.communicate()
-            p = Popen(['chgrp', 'www-data', path], stdin=PIPE, stdout=PIPE)
+            p = Popen(['chgrp', GROUP, path], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chmod', '664', path], stdin=PIPE, stdout=PIPE)
             p.communicate()
 
     return BASE_DIR
@@ -133,88 +152,102 @@ def get_waatea(time):
     f_name = 'Waatea_News_%s%s.mp3' % (hour, ampm)
 
     f_path = prepare_folders()
-    tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
-    prepare_folders(tmp_path)
 
-    tmp_file = os.path.join(tmp_path, f_name)
-    final_file = os.path.join(f_path, f_name)
+    # tmp_path = os.path.join(BASE_MEDIA_DIR, 'tmp')
+    # prepare_folders(tmp_path)
 
-    target_length = 60*6.0
-    print("Fetching %s" % (f_name))
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        # tmp_file = os.path.join(tmp_path, f_name)
+        final_file = os.path.join(f_path, f_name)
 
-    xml = []
-    ftp.retrlines('RETR %s.xml' % (f_id), lambda x: xml.append(x))
-    r_date = ''
-    for line in xml:
-        if '<recorded>' in line:
-            r_date = line.replace('<recorded>', '').replace(
-                '</recorded>', '').strip()
+        target_length = 60*6.0
+        print("Fetching %s" % (f_name))
 
-    record_date = timezone.localize(
-        datetime.strptime(r_date, '%m/%d/%Y %H:%M:%S'))
-    print("Recorded", record_date)
+        xml = []
+        ftp.retrlines('RETR %s.xml' % (f_id), lambda x: xml.append(x))
+        r_date = ''
+        for line in xml:
+            if '<recorded>' in line:
+                r_date = line.replace('<recorded>', '').replace(
+                    '</recorded>', '').strip()
 
-    get_new_file = False
-    # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
-    if path.isfile(final_file):
-        mdate = datetime.fromtimestamp(os.path.getmtime(final_file))
-        file_record_date = mdate.astimezone(timezone)
+        record_date = timezone.localize(
+            datetime.strptime(r_date, '%m/%d/%Y %H:%M:%S'))
+        print("Recorded", record_date)
 
-        print("Old recorded", file_record_date)
-        if record_date > file_record_date:
-            print("File needs updating...")
-            get_new_file = True
+        get_new_file = False
+        # get current file '/srv/airtime/watch_folder/waatea_news/%s' % (f_name)
+        if path.isfile(final_file):
+            mdate = datetime.fromtimestamp(os.path.getmtime(final_file))
+            file_record_date = mdate.astimezone(timezone)
+
+            print("Old recorded", file_record_date)
+            if record_date > file_record_date:
+                print("File needs updating...")
+                get_new_file = True
+            else:
+                print("File up to date.")
+                get_new_file = False
         else:
-            print("File up to date.")
-            get_new_file = False
-    else:
-        print("File doesn't exist...")
-        get_new_file = True
+            print("File doesn't exist...")
+            get_new_file = True
 
-    if get_new_file:
-        print("Downloading new file...")
-        ftp.retrbinary('RETR %s.MP3' % (f_id), open(tmp_file, 'wb').write)
+        if get_new_file:
+            print("Downloading new file...")
+            ftp.retrbinary('RETR %s.MP3' % (f_id), tmp_file.write)
 
-        try:
-            media_length = scale_media(tmp_file, target_length)
-        except Exception as e:
-            print("Error scaling media.")
-            print(e)
-            return
+            try:
+                _ = scale_media(
+                    tmp_file.name, target_length,
+                    max_scale=10,
+                    max_seconds_delta=0.1,
+                    extension='mp3'
+                )
+            except Exception as e:
+                print("Error scaling media.")
+                print(e)
+                return
 
-        p = Popen(['chown', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['chgrp', 'www-data', tmp_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
-        p = Popen(['mv', tmp_file, final_file], stdin=PIPE, stdout=PIPE)
-        p.communicate()
+            fd = mutagen.File(tmp_file.name, easy=True)
+            fd.tags['DATE'] = record_date.strftime('%Y')
+            fd.tags['TITLE'] = (
+                time.strftime('%H:00 ') +
+                'Waatea News - {0}'.format(record_date.strftime('%a').upper())
+            )
+            fd.tags['ARTIST'] = "Waatea"
+            fd.tags['Album'] = "Waatea"
+            fd.tags['Language'] = "Māori"
+            fd.tags['Organization'] = "News"
+            fd.tags['Genre'] = "News & Information"
+            # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
+            fd.save()
 
-        fd = mutagen.File(final_file, easy=True)
-        fd.tags['DATE'] = record_date.strftime('%Y')
-        fd.tags['TITLE'] = "%02d%sM " % (hour, ampm.upper(
-        )) + 'Waatea News - {0}'.format(record_date.strftime('%a').upper())
-        fd.tags['ARTIST'] = "Waatea"
-        fd.tags['Album'] = "Waatea"
-        fd.tags['Language'] = "Māori"
-        fd.tags['Organization'] = "News"
-        fd.tags['Genre'] = "News & Information"
-        # fd.tags[u'TLEN'] = u"%d:%02d.%d"%(media_length['mins'], media_length['secs'], media_length['hunds'])
-        fd.save()
-
-        td = (datetime.now() - start_time)
-        print('elapsed time = %s' % (td.seconds))
-
-        # Try to add album art.
-        image_url = 'https://cdn.tehiku.nz/2022/03/17/704990_waateanews.jpg'
-        try:
-            add_artwork(image_url, final_file)
-        except:
-            pass
-
-    else:
-        if os.path.exists(tmp_file):
-            p = Popen(['rm', tmp_file], stdin=PIPE, stdout=PIPE)
+            # Try to add album art.
+            image_url = 'https://waateanews.com/wp-content/uploads/2021/04/logo-4.png'
+            try:
+                add_artwork(image_url, tmp_file.name)
+            except Exception:
+                pass
+            sleep(0.5)
+            p = Popen(['mv', tmp_file.name, final_file],
+                      stdin=PIPE, stdout=PIPE)
             p.communicate()
+            p = Popen(['chown', USER, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chgrp', GROUP, final_file],
+                      stdin=PIPE, stdout=PIPE)
+            p.communicate()
+            p = Popen(['chmod', '664', final_file], stdin=PIPE, stdout=PIPE)
+            p.communicate()
+
+            td = (datetime.now() - start_time)
+            print('success. elapsed time = %s' % (td.seconds))
+
+        else:
+            if os.path.exists(tmp_file.name):
+                p = Popen(['rm', tmp_file.name], stdin=PIPE, stdout=PIPE)
+                p.communicate()
 
 
 def main():

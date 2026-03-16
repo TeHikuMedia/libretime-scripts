@@ -1,11 +1,14 @@
 {
-	"search_folders":[
+	"search_folders": [
 		"/home/ubuntu/sync/TeHikuDB/"
 	],
 	"project_name": "Te Hiku FM",
 	"project_slug": "te-hiku-fm",
 	"log_path": "/var/log/librescripts",
 	"tmp_dir": "/tmp/librescripts",
+	"user": "rslsync",
+	"owner": "rslsync",
+	"group": "rslsync",
 	"aws": {
 		"s3_bucket": "s3://tehiku-airtime-bucket/",
 		"access_key": "123",

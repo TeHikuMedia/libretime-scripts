@@ -19,7 +19,7 @@ from subprocess import Popen, PIPE
 CONF_FILE = "/etc/librescripts/conf.json"
 ROOT_FOLDER = "/usr/ubuntu/sync/TeHikuRadioDB"
 ROOT_FOLDER = "/Users/livestream/Desktop/DESKTOP 2/desktop/Te Hiku Radio Database"
-LOGFILE= "/var/log/librescripts/update_metadata.log"
+LOGFILE = "/var/log/librescripts/update_metadata.log"
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)s]: %(message)s',
@@ -34,10 +34,11 @@ try:
     d = json.loads(f.read())
     f.close()
     ROOT_FOLDERS = d['search_folders']
-except KeyError as e:
-    logging.error('Incorrectly formatted configuration file {0}'.format(CONF_FILE))
+except KeyError:
+    logging.error(
+        'Incorrectly formatted configuration file {0}'.format(CONF_FILE))
     raise
-except Exception as e:
+except Exception:
     logging.error('Could not read configuration file {0}.'.format(CONF_FILE))
     raise
 
@@ -46,10 +47,8 @@ def scan_folder(ROOT_FOLDER):
     NUM_FILES = 0
     for root, dirs, files in os.walk(ROOT_FOLDER):
 
-
         for name in files:
             NUM_FILES = NUM_FILES + 1
-
 
             # folders = root.split('/')
             # for folder in folders:
@@ -72,7 +71,7 @@ def scan_folder(ROOT_FOLDER):
             parts = root.split('/')
 
             RELATIVE = root.split(ROOT_FOLDER)[1]
-            
+
             parts = RELATIVE.split('/')
             parts.pop(0)
 
@@ -80,29 +79,33 @@ def scan_folder(ROOT_FOLDER):
             for part in parts:
                 if part:
                     if part[0] == '.':
-                        logging.debug("Skipping folder {0}:{1}".format(part, name))
+                        logging.debug(
+                            "Skipping folder {0}:{1}".format(part, name))
                         SKIP_DIR = True
             if SKIP_DIR:
                 continue
 
             try:
-                label = normalize('NFC',parts[0])
+                label = normalize('NFC', parts[0])
             except IndexError as e:
-                logging.warning('File not properly organized: {0}'.format(name))
+                logging.warning(
+                    'File not properly organized: {0}'.format(name))
                 continue
 
             try:
-                language = normalize('NFC',parts[1])
+                language = normalize('NFC', parts[1])
             except IndexError as e:
                 language = None
-                logging.warning('File not in language folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.warning('File not in language folder: {0}'.format(
+                    os.path.join(RELATIVE, name)))
                 continue
 
             try:
-                genre = normalize('NFC',parts[2])
+                genre = normalize('NFC', parts[2])
             except IndexError as e:
                 genre = None
-                logging.debug('File not in genre folder: {0}'.format(os.path.join(RELATIVE, name)))
+                logging.debug('File not in genre folder: {0}'.format(
+                    os.path.join(RELATIVE, name)))
 
             if '#' in root:
                 try:
@@ -114,11 +117,11 @@ def scan_folder(ROOT_FOLDER):
                     print(root)
                     raise error
 
-
             try:
                 audio = mutagen.File(os.path.join(root, name), easy=True)
             except Exception as e:
-                logging.warning('Could not load file with mutagen: {0}'.format(name))
+                logging.warning(
+                    'Could not load file with mutagen: {0}'.format(name))
                 continue
 
             if not audio:
@@ -131,7 +134,7 @@ def scan_folder(ROOT_FOLDER):
                         continue
 
                     logging.warning("Audio is none")
-                    
+
                     outfile = '/tmp/tmp.' + extension
                     cmd = [
                         'ffmpeg', '-y', '-v', 'quiet',
@@ -141,27 +144,30 @@ def scan_folder(ROOT_FOLDER):
                     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
                     out, err = p.communicate()
                     Popen(['mv', outfile, file_path])
-  
+
                     try:
                         audio = mutagen.File(file_path, easy=True)
                     except Exception as e:
-                        logging.warning('Could not load file with mutagen after conversion: {0}'.format(name))
+                        logging.warning(
+                            'Could not load file with mutagen after conversion: {0}'.format(name))
                         continue
 
                     if not audio:
-                        logging.warning('Atemting to add tags so we can use "easy": {0}'.format(name))
+                        logging.warning(
+                            'Atemting to add tags so we can use "easy": {0}'.format(name))
 
                         if extension.lower() in 'mp3':
                             audio = ID3(file_path, translate=False)
                             audio.add(TIT2(encoding=3, text=name))
                             audio.save()
                             audio = mutagen.File(file_path, easy=True)
-        
+
                 else:
                     print("NO exists!")
 
             try:
-                logging.debug("UPDATE:  {0}".format(' '.join(audio['title'].encode('utf-8'))))
+                logging.debug("UPDATE:  {0}".format(
+                    ' '.join(audio['title'].encode('utf-8'))))
             except:
                 logging.debug("UPDATE:  {0}".format(name.encode('utf-8')))
             logging.debug('TAGS:    {0}'.format(audio))
@@ -183,7 +189,8 @@ def scan_folder(ROOT_FOLDER):
                             try:
                                 audio.tags['language'] = language
                             except Exception as e:
-                                logging.warning("Could now write 'langauge' to {0}".format(name))
+                                logging.warning(
+                                    "Could now write 'langauge' to {0}".format(name))
                                 continue
                         SAVE = True
                     logging.debug("LANG:    {0}".format(l))
@@ -223,13 +230,11 @@ def scan_folder(ROOT_FOLDER):
 
                 if SAVE:
                     logging.info(
-                        (u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"\
+                        (u"Updating {0}\n\tTAGS:\t{1}\n\tLANG:\t{2}\n\tGENRE\t{3}\n\tLABEL\t{4}"
                             .format(name, audio, l, g, t)))
                     audio.save()
 
                 logging.debug(audio)
-
-
 
     logging.info("Scanned {0} files in {1}".format(NUM_FILES, ROOT_FOLDER))
 

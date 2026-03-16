@@ -1,0 +1,15 @@
+[Unit]
+Description=Start watching radio folder db
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/usr/local/bin/radio-db-sync-libretime4 -w
+WorkingDirectory=/home/debian
+User=debian
+Group=debian
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

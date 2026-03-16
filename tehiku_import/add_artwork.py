@@ -1,12 +1,13 @@
+import tempfile
 import traceback
-import requests
-from PIL import Image, ImageFilter
 from io import BytesIO
-from mimetypes import MimeTypes
-from pilkit.processors import SmartResize
-from colorthief import ColorThief
+
 import mutagen
+import requests
+from colorthief import ColorThief
 from mutagen.id3 import APIC
+from PIL import Image, ImageFilter
+from pilkit.processors import SmartResize
 
 
 class PortraitToLandscapeEffect(object):
@@ -133,58 +134,61 @@ class SquareImageEffect(PortraitToLandscapeEffect):
 
 def add_artwork(image_uri, file_path, processor='SmartResize'):
     size = (300, 300)
-    try:
-        if 'http' in image_uri:
-            # Remote image file
-            r = requests.get(image_uri)
-            image_data = r.content
-        else:
-            # Local image file
-            with open(image_uri, 'rb') as file:
-                image_data = file.read()
 
-    except Exception:
-        print("Could not open {0}".format(image_uri))
-        return False
-
-    # Try to embed picture
-    try:
-
-        image = Image.open(BytesIO(image_data))
-        if 'resizetofit' in processor.lower():
-            color_thief = ColorThief(BytesIO(image_data))
-            # get the dominant color
-            # dominant_color = color_thief.get_color(quality=10)
-            dominant_color = color_thief.get_palette()[0]
-            processors = [SquareImageEffect(), SmartResize(size[0], size[1])]
-        else:
-            processors = [SmartResize(size[0], size[1])]
-            dominant_color = (255, 255, 255)
-
-        for p in processors:
-            image = p.process(image)
-
-        background = Image.new("RGB", size, dominant_color)
+    with tempfile.NamedTemporaryFile() as tmp:
         try:
-            # 3 is the alpha channel
-            background.paste(image, mask=image.split()[3])
+            if 'http' in image_uri:
+                # Remote image file
+                get_response = requests.get(image_uri, stream=True)
+                for chunk in get_response.iter_content(chunk_size=1024):
+                    if chunk:  # filter out keep-alive new chunks
+                        tmp.write(chunk)
+            else:
+                # Local image file
+                with open(image_uri, 'rb') as file:
+                    tmp.write(file.read())
         except Exception:
-            background.paste(image)
-        temp = BytesIO()
-        background.save(temp, format="JPEG")
-        fd = mutagen.File(file_path)
-        fd.tags.add(
-            APIC(
-                encoding=3,
-                mime='image/jpeg',
-                type=3, desc=u'Album',
-                data=temp.getvalue()
+            print("Could not open {0}".format(image_uri))
+            return False
+
+        # Try to embed picture
+        try:
+            image = Image.open(tmp)
+            if 'resizetofit' in processor.lower():
+                color_thief = ColorThief(tmp)
+                # get the dominant color
+                # dominant_color = color_thief.get_color(quality=10)
+                dominant_color = color_thief.get_palette()[0]
+                processors = [
+                    SquareImageEffect(), SmartResize(size[0], size[1])]
+            else:
+                processors = [SmartResize(size[0], size[1])]
+                dominant_color = (255, 255, 255)
+
+            for p in processors:
+                image = p.process(image)
+
+            background = Image.new("RGB", size, dominant_color)
+            try:
+                # 3 is the alpha channel
+                background.paste(image, mask=image.split()[3])
+            except Exception:
+                background.paste(image)
+            temp = BytesIO()
+            background.save(temp, format="JPEG")
+            fd = mutagen.File(file_path)
+            fd.tags.add(
+                APIC(
+                    encoding=3,
+                    mime='image/jpeg',
+                    type=3, desc=u'Album',
+                    data=temp.getvalue()
+                )
             )
-        )
-        fd.save()
-        return True
-    except Exception as e:
-        print(e)
-        print(traceback.format_exc())
-        print('Could not set album art')
-        return False
+            fd.save()
+            return True
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+            print('Could not set album art')
+            return False
