@@ -846,29 +846,29 @@ class MyRegexMatchingEventHandler(RegexMatchingEventHandler):
 
     def on_created(self, event):
         """ """
-        data = process_path(self._get_path(event), self.root_folder)
-        if data:
-            self.process_file(data, created=True)
+        metadata = process_path(self._get_path(event), self.root_folder)
+        if metadata:
+            self.process_file(metadata, created=True)
 
     def on_deleted(self, event: RegexMatchingEventHandler):
         """
         Delete the file IF it's in the libretime database.
         """
         logging.warning("deleted: %s", event.dest_path)
-        data = process_path(self._get_path(event), self.root_folder)
-        if data:
-            self.process_file(data, deleted=True)
+        metadata = process_path(self._get_path(event), self.root_folder)
+        if metadata:
+            self.process_file(metadata, deleted=True)
 
     def on_modified(self, event: RegexMatchingEventHandler):
         """
         Since we update metadata on the file when it's moved, the modified
         will be triggered so we can up date metadata in the database.
         """
-        event.
-        logging.info("modified: %s", event.dest_path)
-        data = process_path(self._get_path(event), self.root_folder)
-        if data:
-            self.process_file(data, updated=True)
+        path = self._get_path(event)
+        logging.info("modified: %s", path)
+        metadata = process_path(path, self.root_folder)
+        if metadata:
+            self.process_file(metadata, updated=True)
 
 
 def main():
